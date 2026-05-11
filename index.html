@@ -193,7 +193,7 @@
           <div style="padding:10px 14px;font-size:12px;color:var(--gray)" id="dropdownRole">--</div>
           <div class="dropdown-divider"></div>
           <a href="users.html" class="dropdown-item" id="manageUserBtn">👥 จัดการผู้ใช้</a>
-          <a href="admin.html" class="dropdown-item" id="manageSystemBtn">⚙️ จัดการระบบ</a>
+          <a href="admin-systems.html" class="dropdown-item" id="manageSystemBtn">⚙️ จัดการระบบ</a>
           <div class="dropdown-divider"></div>
           <div class="dropdown-item danger" onclick="handleLogout()">⏻ ออกจากระบบ</div>
         </div>
@@ -293,7 +293,7 @@
       <div class="footer-col">
         <h4>ผู้ดูแล</h4>
         <a href="users.html">จัดการ User</a>
-        <a href="admin.html">จัดการระบบ</a>
+        <a href="admin-systems.html">จัดการระบบ</a>
       </div>
     </div>
     <div class="footer-bottom">
@@ -315,29 +315,9 @@
   let currentUserData = null;
 
   // ===== DATA ตัวอย่าง (จะดึงจาก Firestore ในอนาคต) =====
-  const defaultSystems = [
-    {name:'POS ระบบขาย',desc:'ระบบขายหน้าร้าน ออกใบเสร็จ คิดเงิน',icon:'💊',color:'#0d4f3c',tag:'ขาย',url:'#'},
-    {name:'Stock Management',desc:'จัดการคลังยา ตรวจสต็อก เช็ควันหมดอายุ',icon:'📦',color:'#1a7a5e',tag:'คลัง',url:'#'},
-    {name:'HR Portal',desc:'ระบบลา ตารางเวร เงินเดือนพนักงาน',icon:'👥',color:'#d4a574',tag:'บุคคล',url:'#'},
-    {name:'Sales Report',desc:'รายงานยอดขาย วิเคราะห์ Dashboard',icon:'📊',color:'#ff6b4a',tag:'รายงาน',url:'#'},
-    {name:'Customer CRM',desc:'ระบบสมาชิก ลูกค้าประจำ สะสมแต้ม',icon:'❤️',color:'#dc2626',tag:'ลูกค้า',url:'#'},
-    {name:'Purchase Order',desc:'ระบบสั่งซื้อ จัดการ Supplier',icon:'🛒',color:'#7c3aed',tag:'จัดซื้อ',url:'#'},
-    {name:'Accounting',desc:'ระบบบัญชี ภาษี งบการเงิน',icon:'💰',color:'#0891b2',tag:'บัญชี',url:'#'},
-    {name:'E-Learning',desc:'อบรมออนไลน์ คอร์สเภสัชกร',icon:'🎓',color:'#16a34a',tag:'อบรม',url:'#'},
-  ];
+  const defaultSystems = [];
 
-  const defaultBranches = [
-    {code:'BKK001',name:'สาขาสีลม',area:'กรุงเทพฯ',url:'#'},
-    {code:'BKK002',name:'สาขาสยาม สแควร์',area:'กรุงเทพฯ',url:'#'},
-    {code:'BKK003',name:'สาขาบางนา (เซ็นทรัล)',area:'กรุงเทพฯ',url:'#'},
-    {code:'BKK004',name:'สาขาลาดพร้าว',area:'กรุงเทพฯ',url:'#'},
-    {code:'NTB001',name:'สาขานนทบุรี',area:'ภาคกลาง',url:'#'},
-    {code:'AYA001',name:'สาขาอยุธยา',area:'ภาคกลาง',url:'#'},
-    {code:'CNX001',name:'สาขาเชียงใหม่ (นิมมาน)',area:'ภาคเหนือ',url:'#'},
-    {code:'PHK001',name:'สาขาภูเก็ต',area:'ภาคใต้',url:'#'},
-    {code:'HDY001',name:'สาขาหาดใหญ่',area:'ภาคใต้',url:'#'},
-    {code:'KOR001',name:'สาขาโคราช',area:'ภาคอีสาน',url:'#'},
-  ];
+  const defaultBranches = [];
 
   // ===== AUTH - บังคับ Login ก่อน =====
   requireAuth(async (userData) => {
@@ -429,7 +409,11 @@
     });
 
     if (filtered.length === 0) {
-      grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--gray)">ไม่พบระบบที่ค้นหา</div>';
+      grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--gray)">
+        <div style="font-size:48px;margin-bottom:16px">💊</div>
+        <div style="font-size:16px;font-weight:600;color:var(--ink);margin-bottom:8px">ยังไม่มีระบบงาน</div>
+        <div style="font-size:14px">ผู้ดูแลระบบสามารถเพิ่มระบบงานได้ที่ <a href="admin-systems.html" style="color:var(--green-mid)">หน้า Admin</a></div>
+      </div>`;
       return;
     }
 
@@ -454,7 +438,11 @@
     });
 
     if (filtered.length === 0) {
-      grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--gray)">ไม่พบสาขาที่ค้นหา</div>';
+      grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--gray)">
+        <div style="font-size:48px;margin-bottom:16px">🏪</div>
+        <div style="font-size:16px;font-weight:600;color:var(--ink);margin-bottom:8px">ยังไม่มีข้อมูลสาขา</div>
+        <div style="font-size:14px">ผู้ดูแลระบบสามารถเพิ่มสาขาได้ที่ <a href="admin-systems.html" style="color:var(--green-mid)">หน้า Admin</a></div>
+      </div>`;
       return;
     }
 
