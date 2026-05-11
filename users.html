@@ -158,9 +158,21 @@
     .preset-grid{grid-template-columns:repeat(3,1fr)}
   }
 </style>
+<link rel="stylesheet" href="mobile.css">
 </head>
 <body>
 
+
+<!-- Mobile Header -->
+<div class="mobile-header">
+  <div class="m-logo">
+    <div class="m-logo-icon">D</div>
+    <div class="m-logo-text">Dpharmacy</div>
+  </div>
+  <div class="m-user">
+    <div class="m-avatar" id="userAvatar">--</div>
+  </div>
+</div>
 <div id="loadingPage" class="loading-page">
   <div style="font-size:48px">💊</div>
   <div>กำลังโหลด...</div>
@@ -194,7 +206,7 @@
     </div>
   </aside>
 
-  <main class="main">
+  <main class="main mobile-page">
     <div class="page-head">
       <div>
         <div class="breadcrumb"><a href="index.html">หน้าแรก</a> / Admin / จัดการผู้ใช้</div>
@@ -250,7 +262,7 @@
           </select>
         </div>
       </div>
-      <div id="tableContainer">
+      <div id="tableContainer" class="table-scroll" style="overflow-x:auto">
         <table>
           <thead>
             <tr>
@@ -972,5 +984,27 @@
     if (e.target.id === 'extendModal') closeExtendModal();
   });
 </script>
+
+<!-- Bottom Navigation (Mobile) -->
+<div class="bottom-nav">
+  <div class="bottom-nav-inner">
+      <a href="index.html" class="bottom-nav-item ">
+        <span class="nav-ico">🏠</span>
+        หน้าแรก
+      </a>
+      <a href="dashboard.html" class="bottom-nav-item ">
+        <span class="nav-ico">📊</span>
+        Dashboard
+      </a>
+      <a href="users.html" class="bottom-nav-item active">
+        <span class="nav-ico">👥</span>
+        User
+      </a>
+      <a href="admin-systems.html" class="bottom-nav-item ">
+        <span class="nav-ico">⚙️</span>
+        ระบบ
+      </a>
+  </div>
+</div>
 </body>
 </html>

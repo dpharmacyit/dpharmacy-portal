@@ -121,10 +121,25 @@
     .visual{display:none}
     .form-side{padding:20px}
   }
-</style>
-</head>
-<body>
 
+@media (max-width: 768px) {
+  .mobile-login-top { display: block !important; }
+  .form-side { padding-top: 20px !important; }
+}
+</style>
+<link rel="stylesheet" href="mobile.css">
+</head>
+<body class="login-page">
+
+
+<!-- Mobile Login Header -->
+<div style="display:none" class="mobile-login-top" id="mobileLoginTop">
+  <div style="text-align:center;padding:40px 20px 0">
+    <div style="width:64px;height:64px;background:linear-gradient(135deg,var(--green-deep),var(--green-mid));border-radius:18px;display:flex;align-items:center;justify-content:center;color:white;font-size:36px;font-weight:800;margin:0 auto 12px">D</div>
+    <div style="font-family:'Outfit',sans-serif;font-size:24px;font-weight:800;color:var(--green-deep)">Dpharmacy</div>
+    <div style="font-size:12px;color:var(--gray);letter-spacing:2px;text-transform:uppercase;margin-top:4px">Internal Portal</div>
+  </div>
+</div>
 <div class="visual">
   <div class="brand">
     <div class="brand-icon">D</div>
