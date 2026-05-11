@@ -59,27 +59,10 @@
   .admin-btn:hover{background:var(--green-deep);transform:translateY(-1px)}
   .admin-btn.hidden{display:none}
 
-  .hero{max-width:1400px;margin:0 auto;padding:48px 32px 24px;display:grid;grid-template-columns:1.2fr .8fr;gap:48px;align-items:center}
-  .hero-text h2{font-family:'Outfit',sans-serif;font-size:54px;line-height:1.05;font-weight:800;letter-spacing:-2px;color:var(--ink)}
-  .hero-text h2 .accent{color:var(--green-mid);font-style:italic;font-weight:300}
-  .hero-text p{margin-top:20px;font-size:17px;color:var(--gray);line-height:1.7;max-width:520px}
-  .hero-stats{display:flex;gap:32px;margin-top:32px;padding-top:32px;border-top:1px solid var(--line)}
-  .stat .num{font-family:'Outfit',sans-serif;font-size:36px;font-weight:800;color:var(--green-deep);line-height:1}
-  .stat .label{font-size:13px;color:var(--gray);margin-top:4px;letter-spacing:.5px}
 
-  .hero-visual{aspect-ratio:1;background:linear-gradient(135deg,var(--green-soft) 0%,var(--mint) 100%);border-radius:32px;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center}
   .pill{position:absolute;background:white;padding:14px 24px;border-radius:100px;font-size:14px;font-weight:500;box-shadow:0 8px 24px rgba(13,79,60,.12);display:flex;align-items:center;gap:8px}
-  .pill-1{top:18%;left:8%;animation:float 3s ease-in-out infinite}
-  .pill-2{top:38%;right:6%;animation:float 3.5s ease-in-out infinite .5s}
-  .pill-3{bottom:22%;left:15%;animation:float 4s ease-in-out infinite 1s}
-  .pill-4{bottom:8%;right:18%;animation:float 3.2s ease-in-out infinite 1.5s}
-  @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
-  .cross{width:200px;height:200px;background:var(--green-deep);border-radius:24px;display:flex;align-items:center;justify-content:center;box-shadow:0 30px 60px rgba(13,79,60,.3);transform:rotate(-8deg)}
-  .cross::before,.cross::after{content:'';position:absolute;background:white;border-radius:8px}
-  .cross::before{width:80px;height:20px}
-  .cross::after{width:20px;height:80px}
 
-  .search-section{max-width:1400px;margin:24px auto 0;padding:0 32px}
+  .search-section{max-width:1400px;margin:32px auto 0;padding:0 32px}
   .search-wrap{background:white;border:2px solid var(--line);border-radius:18px;padding:6px;display:flex;align-items:center;transition:all .2s}
   .search-wrap:focus-within{border-color:var(--green-mid);box-shadow:0 0 0 4px rgba(26,122,94,.1)}
   .search-wrap input{flex:1;border:none;outline:none;padding:14px 20px;font-size:16px;font-family:inherit;background:transparent}
@@ -138,9 +121,7 @@
   .loading-overlay p{color:var(--gray);font-size:14px}
 
   @media(max-width:900px){
-    .hero{grid-template-columns:1fr;padding:32px 20px}
-    .hero-text h2{font-size:38px}
-    .systems-grid{grid-template-columns:repeat(2,1fr)}
+        .systems-grid{grid-template-columns:repeat(2,1fr)}
     .footer-grid{grid-template-columns:1fr 1fr;gap:24px}
     .topbar-left{display:none}
   }
@@ -209,26 +190,6 @@
   </div>
 </header>
 
-<!-- Hero -->
-<section class="hero">
-  <div class="hero-text">
-    <h2>ศูนย์รวมระบบงาน<br><span class="accent">ทุกอย่าง</span> ในที่เดียว</h2>
-    <p>เข้าถึงระบบงานทุกแผนก เชื่อมต่อทุกสาขา ดูข้อมูลแบบ Real-time จัดการทุกอย่างได้จากหน้าเดียว</p>
-    <div class="hero-stats">
-      <div class="stat"><div class="num" id="statBranch">--</div><div class="label">สาขา</div></div>
-      <div class="stat"><div class="num" id="statSystem">--</div><div class="label">ระบบงาน</div></div>
-      <div class="stat"><div class="num">99.9%</div><div class="label">Uptime</div></div>
-    </div>
-  </div>
-  <div class="hero-visual">
-    <div class="pill pill-1">💊 ระบบขาย</div>
-    <div class="pill pill-2">📊 รายงาน</div>
-    <div class="pill pill-3">📦 สต็อก</div>
-    <div class="pill pill-4">👥 HR</div>
-    <div class="cross"></div>
-  </div>
-</section>
-
 <!-- Search -->
 <section class="search-section">
   <div class="search-wrap">
@@ -285,7 +246,9 @@
       </div>
       <div class="footer-col">
         <h4>ระบบ</h4>
-        <a href="#">POS</a><a href="#">Stock</a><a href="#">HR</a><a href="#">Reports</a>
+        <a href="admin-systems.html">จัดการระบบ</a>
+        <a href="users.html">จัดการ User</a>
+        <a href="dashboard.html">Dashboard</a>
       </div>
       <div class="footer-col">
         <h4>ช่วยเหลือ</h4>
@@ -392,9 +355,7 @@
       allBranches = [];
     }
 
-    // อัปเดต stats
-    document.getElementById('statBranch').textContent = allBranches.length;
-    document.getElementById('statSystem').textContent = allSystems.length;
+
 
     // สร้าง Area Tabs
     const areas = [...new Set(allBranches.map(b => b.area))];
