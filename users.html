@@ -561,7 +561,7 @@
             <div class="row-actions">
               <button class="ic-btn" onclick="openEditModal('${u.id}')" title="แก้ไข">✏️</button>
               <button class="ic-btn" onclick="openExtendModal('${u.id}')" title="ต่ออายุ">⏰</button>
-              <button class="ic-btn" onclick="resetPassword('${u.email}')" title="รีเซ็ตรหัส">🔑</button>
+              <button class="ic-btn" onclick="resetPassword('${u.email}','${u.name||u.email}')" title="ส่ง Email รีเซ็ตรหัสผ่าน">🔑</button>
               <button class="ic-btn" onclick="toggleActive('${u.id}')" title="${u.isActive?'ระงับ':'เปิดใช้'}">${u.isActive?'🔒':'🔓'}</button>
               <button class="ic-btn del" onclick="deleteUser('${u.id}','${u.email}')" title="ลบ">🗑️</button>
             </div>
@@ -970,13 +970,35 @@
     } catch (err) { alert('❌ ' + err.message); }
   }
 
-  async function resetPassword(email) {
-    if (!confirm(`ส่งลิงก์รีเซ็ตรหัสผ่านไปที่ ${email}?`)) return;
+  async function resetPassword(email, userName) {
+    // แสดง dialog พร้อมข้อมูลครบ
+    const confirmed = confirm(
+      `🔑 รีเซ็ตรหัสผ่าน\n\n` +
+      `ผู้ใช้: ${userName}\n` +
+      `Email: ${email}\n\n` +
+      `ระบบจะส่งลิงก์รีเซ็ตรหัสผ่านไปที่ Email นี้\n` +
+      `User จะได้รับอีเมลภายใน 1-2 นาที\n\n` +
+      `ยืนยันการส่ง?`
+    );
+    if (!confirmed) return;
+
     try {
+      // ตั้งค่าภาษาไทย
+      auth.languageCode = 'th';
       await auth.sendPasswordResetEmail(email);
-      await logActivity('reset_password', { email });
-      alert('✅ ส่งลิงก์รีเซ็ตรหัสผ่านสำเร็จ! User จะได้รับอีเมลในไม่ช้า');
-    } catch (err) { alert('❌ ' + err.message); }
+      await logActivity('reset_password', { email, userName });
+      alert(
+        `✅ ส่งลิงก์รีเซ็ตรหัสผ่านสำเร็จ!\n\n` +
+        `📧 ส่งไปที่: ${email}\n` +
+        `⏰ ลิงก์หมดอายุใน 1 ชั่วโมง\n\n` +
+        `💡 แจ้ง User ให้ตรวจสอบกล่องข้อความ\nรวมถึงโฟลเดอร์ Spam ด้วย`
+      );
+    } catch (err) {
+      let msg = err.message;
+      if (err.code === 'auth/user-not-found') msg = 'ไม่พบ Email นี้ในระบบ';
+      if (err.code === 'auth/invalid-email') msg = 'Email ไม่ถูกต้อง';
+      alert('❌ ส่งไม่สำเร็จ: ' + msg);
+    }
   }
 
   async function deleteUser(userId, email) {
