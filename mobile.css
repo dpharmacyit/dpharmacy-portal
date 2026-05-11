@@ -117,7 +117,7 @@
     grid-template-columns: 1fr !important;
   }
   .systems-grid {
-    grid-template-columns: repeat(2, 1fr) !important;
+    grid-template-columns: repeat(4, 1fr) !important;
   }
 }
 
@@ -195,8 +195,8 @@
 
   /* Systems Grid */
   .systems-grid {
-    grid-template-columns: repeat(2, 1fr) !important;
-    gap: 10px !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 8px !important;
   }
   .sys-card {
     padding: 14px !important;

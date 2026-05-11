@@ -69,30 +69,30 @@
   .section-sub{font-size:14px;color:var(--gray);margin-top:4px}
   .view-all{color:var(--green-mid);text-decoration:none;font-size:14px;font-weight:500;display:flex;align-items:center;gap:4px}
 
-  .systems-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
-  .sys-card{background:white;border:1px solid var(--line);border-radius:20px;padding:24px;cursor:pointer;transition:all .2s;text-decoration:none;color:inherit;display:flex;flex-direction:column;gap:14px;position:relative;overflow:hidden}
+  .systems-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
+  .sys-card{background:white;border:1px solid var(--line);border-radius:14px;padding:14px;cursor:pointer;transition:all .2s;text-decoration:none;color:inherit;display:flex;flex-direction:column;gap:8px;position:relative;overflow:hidden}
   .sys-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--green-deep),var(--mint));transform:translateX(-100%);transition:transform .3s}
   .sys-card:hover{transform:translateY(-4px);border-color:var(--green-mid);box-shadow:0 16px 40px rgba(13,79,60,.1)}
   .sys-card:hover::before{transform:translateX(0)}
-  .sys-icon{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;color:white}
-  .sys-name{font-size:16px;font-weight:600}
-  .sys-desc{font-size:13px;color:var(--gray);line-height:1.5;flex:1}
-  .sys-tag{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--green-mid);font-weight:600}
+  .sys-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;color:white;flex-shrink:0}
+  .sys-name{font-size:13px;font-weight:600}
+  .sys-desc{font-size:11px;color:var(--gray);line-height:1.4;flex:1}
+  .sys-tag{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--green-mid);font-weight:600}
 
   .branches-section{background:linear-gradient(180deg,transparent 0,var(--green-soft) 100%);margin-top:64px;padding:48px 0 80px}
   .branch-toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;gap:16px;flex-wrap:wrap}
   .branch-tabs{display:flex;gap:4px;background:white;padding:4px;border-radius:14px;border:1px solid var(--line)}
   .branch-tab{padding:8px 16px;font-size:13px;border:none;background:transparent;border-radius:10px;cursor:pointer;font-family:inherit;color:var(--gray)}
   .branch-tab.active{background:var(--green-deep);color:white}
-  .branches-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
-  .branch-card{background:white;border:1px solid var(--line);border-radius:16px;padding:18px;cursor:pointer;transition:all .2s;display:flex;flex-direction:column;gap:10px;text-decoration:none;color:inherit;position:relative}
+  .branches-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px}
+  .branch-card{background:white;border:1px solid var(--line);border-radius:12px;padding:12px 14px;cursor:pointer;transition:all .2s;display:flex;flex-direction:column;gap:6px;text-decoration:none;color:inherit;position:relative}
   .branch-card:hover{border-color:var(--green-mid);transform:translateX(4px);box-shadow:0 8px 20px rgba(13,79,60,.08)}
   .branch-head{display:flex;justify-content:space-between;align-items:center}
-  .branch-code{font-family:'Outfit',monospace;font-size:12px;font-weight:600;background:var(--green-soft);color:var(--green-deep);padding:4px 10px;border-radius:8px;letter-spacing:1px}
+  .branch-code{font-family:'Outfit',monospace;font-size:10px;font-weight:600;background:var(--green-soft);color:var(--green-deep);padding:3px 8px;border-radius:6px;letter-spacing:.5px}
   .branch-status{width:8px;height:8px;border-radius:50%;background:#22c55e;box-shadow:0 0 0 3px rgba(34,197,94,.2)}
-  .branch-name{font-size:15px;font-weight:600;line-height:1.3}
-  .branch-meta{font-size:12px;color:var(--gray);display:flex;align-items:center;gap:6px}
-  .branch-arrow{margin-top:6px;color:var(--green-mid);font-size:13px;display:flex;align-items:center;gap:4px;font-weight:500}
+  .branch-name{font-size:13px;font-weight:600;line-height:1.3}
+  .branch-meta{font-size:11px;color:var(--gray);display:flex;align-items:center;gap:4px}
+  .branch-arrow{color:var(--green-mid);font-size:11px;display:flex;align-items:center;gap:4px;font-weight:500}
 
   footer{background:var(--ink);color:white;padding:48px 0 24px}
   .footer-inner{max-width:1400px;margin:0 auto;padding:0 32px}
