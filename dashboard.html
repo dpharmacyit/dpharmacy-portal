@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard | Dpharmacy Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;800&display=swap" rel="stylesheet">
+
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+
+<style>
+  :root{
+    --green-deep:#0d4f3c;--green-mid:#1a7a5e;--green-soft:#e8f5ef;
+    --cream:#fdfcf7;--ink:#0f1f1a;--gray:#6b7d75;
+    --line:#e3ebe6;--accent:#ff6b4a;--gold:#d4a574;--danger:#dc2626;
+    --blue:#2563eb;--purple:#7c3aed;--orange:#ea580c;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'IBM Plex Sans Thai','Outfit',sans-serif;background:#f4f7f5;color:var(--ink);min-height:100vh}
+  .app{display:grid;grid-template-columns:260px 1fr;min-height:100vh}
+
+  /* SIDEBAR */
+  .sidebar{background:var(--ink);color:white;padding:24px 0;position:sticky;top:0;height:100vh;display:flex;flex-direction:column}
+  .sidebar-logo{padding:0 24px 24px;border-bottom:1px solid rgba(255,255,255,.1);display:flex;align-items:center;gap:12px}
+  .sidebar-logo .icon{width:40px;height:40px;background:linear-gradient(135deg,var(--green-mid),var(--green-deep));border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:20px}
+  .sidebar-logo h1{font-family:'Outfit',sans-serif;font-size:18px;font-weight:700}
+  .sidebar-logo p{font-size:11px;opacity:.5;letter-spacing:1.5px;text-transform:uppercase}
+  .nav-section{padding:24px 0;flex:1;overflow-y:auto}
+  .nav-label{padding:0 24px 8px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;opacity:.5}
+  .nav-item{display:flex;align-items:center;gap:12px;padding:12px 24px;color:white;text-decoration:none;font-size:14px;border-left:3px solid transparent;transition:all .15s;cursor:pointer}
+  .nav-item:hover{background:rgba(255,255,255,.05)}
+  .nav-item.active{background:rgba(26,122,94,.15);border-left-color:var(--green-mid);color:#a8e6cf}
+  .nav-item .ico{width:20px;text-align:center}
+  .sidebar-foot{padding:16px 24px;border-top:1px solid rgba(255,255,255,.1);display:flex;align-items:center;gap:12px}
+  .sidebar-foot .av{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--accent));display:flex;align-items:center;justify-content:center;font-weight:600;font-size:13px}
+  .sidebar-foot .info{flex:1;min-width:0}
+  .sidebar-foot .name{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .sidebar-foot .role-txt{font-size:11px;opacity:.6}
+  .logout-btn{background:transparent;border:none;color:white;cursor:pointer;opacity:.5;font-size:18px}
+  .logout-btn:hover{opacity:1}
+
+  /* MAIN */
+  .main{padding:32px 40px;overflow-y:auto}
+  .page-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:32px;flex-wrap:wrap;gap:16px}
+  .page-head h2{font-family:'Outfit',sans-serif;font-size:32px;font-weight:700;letter-spacing:-.5px}
+  .breadcrumb{font-size:13px;color:var(--gray);margin-bottom:8px}
+  .breadcrumb a{color:var(--green-mid);text-decoration:none}
+  .live-badge{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--green-mid);font-weight:500}
+  .live-dot{width:8px;height:8px;border-radius:50%;background:#22c55e;animation:pulse 2s infinite}
+  @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(34,197,94,.4)}50%{box-shadow:0 0 0 6px rgba(34,197,94,0)}}
+
+  /* STAT CARDS */
+  .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+  .stat-card{background:white;border:1px solid var(--line);border-radius:18px;padding:24px;position:relative;overflow:hidden;transition:all .2s}
+  .stat-card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.06)}
+  .stat-card .top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px}
+  .stat-card .icon{width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px}
+  .stat-card .trend{font-size:12px;font-weight:600;padding:3px 8px;border-radius:20px}
+  .trend-up{background:#dcfce7;color:#166534}
+  .trend-down{background:#fef2f2;color:var(--danger)}
+  .trend-neu{background:#f1f5f9;color:#475569}
+  .stat-card .val{font-family:'Outfit',sans-serif;font-size:40px;font-weight:800;line-height:1;margin-bottom:6px}
+  .stat-card .lbl{font-size:13px;color:var(--gray)}
+  .stat-card .sub{font-size:12px;color:var(--gray);margin-top:8px;padding-top:8px;border-top:1px solid var(--line)}
+
+  .ic-green{background:var(--green-soft);color:var(--green-deep)}
+  .ic-blue{background:#eff6ff;color:var(--blue)}
+  .ic-orange{background:#fff7ed;color:var(--orange)}
+  .ic-purple{background:#f3e8ff;color:var(--purple)}
+  .ic-red{background:#fef2f2;color:var(--danger)}
+  .ic-gold{background:#fef3c7;color:#92400e}
+
+  /* GRID LAYOUT */
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px}
+  .grid-3{display:grid;grid-template-columns:2fr 1fr;gap:20px;margin-bottom:20px}
+
+  /* CARD */
+  .card{background:white;border:1px solid var(--line);border-radius:18px;overflow:hidden}
+  .card-head{padding:18px 24px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
+  .card-head h3{font-size:16px;font-weight:600;display:flex;align-items:center;gap:8px}
+  .card-body{padding:20px 24px}
+
+  /* CHART */
+  .chart-wrap{height:200px;display:flex;align-items:flex-end;gap:8px;padding:0 4px}
+  .bar-group{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px}
+  .bar{width:100%;border-radius:6px 6px 0 0;transition:height .6s ease;position:relative;cursor:pointer}
+  .bar:hover{filter:brightness(1.1)}
+  .bar-tooltip{position:absolute;top:-28px;left:50%;transform:translateX(-50%);background:var(--ink);color:white;font-size:11px;padding:3px 8px;border-radius:6px;white-space:nowrap;display:none}
+  .bar:hover .bar-tooltip{display:block}
+  .bar-label{font-size:11px;color:var(--gray);text-align:center}
+
+  /* TABLE */
+  .mini-table{width:100%;border-collapse:collapse}
+  .mini-table th{padding:10px 16px;text-align:left;font-size:11px;font-weight:600;color:var(--gray);letter-spacing:.5px;text-transform:uppercase;border-bottom:1px solid var(--line);background:#f9fbfa}
+  .mini-table td{padding:12px 16px;font-size:13px;border-bottom:1px solid #f1f4f2}
+  .mini-table tbody tr:hover{background:#f9fbfa}
+  .mini-table tbody tr:last-child td{border-bottom:none}
+
+  /* PILL */
+  .pill{display:inline-flex;padding:3px 8px;border-radius:20px;font-size:11px;font-weight:600}
+  .pill-green{background:var(--green-soft);color:var(--green-deep)}
+  .pill-red{background:#fef2f2;color:var(--danger)}
+  .pill-orange{background:#fff7ed;color:var(--orange)}
+  .pill-blue{background:#eff6ff;color:var(--blue)}
+  .pill-gray{background:#f1f5f9;color:#475569}
+  .pill-purple{background:#f3e8ff;color:var(--purple)}
+  .pill-gold{background:#fef3c7;color:#92400e}
+
+  /* ACTIVITY FEED */
+  .activity-list{display:flex;flex-direction:column;gap:0}
+  .activity-item{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid #f1f4f2}
+  .activity-item:last-child{border-bottom:none}
+  .activity-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+  .activity-info{flex:1;min-width:0}
+  .activity-info .action{font-size:13px;font-weight:500}
+  .activity-info .meta{font-size:12px;color:var(--gray);margin-top:2px}
+  .activity-time{font-size:11px;color:var(--gray);white-space:nowrap}
+
+  /* EXPIRY LIST */
+  .expiry-item{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid #f1f4f2}
+  .expiry-item:last-child{border-bottom:none}
+  .expiry-user{display:flex;align-items:center;gap:10px}
+  .expiry-avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--accent));display:flex;align-items:center;justify-content:center;color:white;font-weight:600;font-size:13px;flex-shrink:0}
+  .expiry-name{font-size:13px;font-weight:500}
+  .expiry-email{font-size:11px;color:var(--gray)}
+
+  /* DONUT CHART */
+  .donut-wrap{display:flex;align-items:center;gap:24px}
+  .donut{position:relative;width:120px;height:120px;flex-shrink:0}
+  .donut svg{transform:rotate(-90deg)}
+  .donut-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+  .donut-center .num{font-family:'Outfit',sans-serif;font-size:24px;font-weight:800}
+  .donut-center .sub{font-size:11px;color:var(--gray)}
+  .donut-legend{display:flex;flex-direction:column;gap:8px;flex:1}
+  .legend-item{display:flex;align-items:center;gap:8px;font-size:13px}
+  .legend-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+
+  /* REFRESH BTN */
+  .btn-refresh{padding:8px 16px;background:white;border:1px solid var(--line);border-radius:10px;cursor:pointer;font-family:inherit;font-size:13px;display:flex;align-items:center;gap:6px;transition:all .15s}
+  .btn-refresh:hover{border-color:var(--green-mid);color:var(--green-mid)}
+
+  .loading-page{display:flex;align-items:center;justify-content:center;min-height:100vh;flex-direction:column;gap:16px;color:var(--gray)}
+  .spinner-sm{display:inline-block;width:14px;height:14px;border:2px solid var(--line);border-top-color:var(--green-mid);border-radius:50%;animation:spin .8s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  .empty-state{padding:32px;text-align:center;color:var(--gray);font-size:13px}
+
+  @media(max-width:1200px){
+    .stats-grid{grid-template-columns:repeat(2,1fr)}
+    .grid-2,.grid-3{grid-template-columns:1fr}
+  }
+  @media(max-width:900px){
+    .app{grid-template-columns:1fr}
+    .sidebar{display:none}
+    .main{padding:20px}
+    .stats-grid{grid-template-columns:repeat(2,1fr)}
+  }
+</style>
+</head>
+<body>
+
+<div id="loadingPage" class="loading-page">
+  <div style="font-size:48px">📊</div>
+  <div>กำลังโหลด Dashboard...</div>
+</div>
+
+<div class="app" id="app" style="display:none">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="icon">D</div>
+      <div><h1>Dpharmacy</h1><p>Admin Panel</p></div>
+    </div>
+    <nav class="nav-section">
+      <div class="nav-label">หลัก</div>
+      <a class="nav-item active"><span class="ico">📊</span> Dashboard</a>
+      <a class="nav-item" href="index.html"><span class="ico">🏠</span> หน้าแรก</a>
+      <a class="nav-item" href="users.html"><span class="ico">👥</span> จัดการผู้ใช้</a>
+      <a class="nav-item" href="admin-systems.html"><span class="ico">⚙️</span> จัดการระบบ+สาขา</a>
+      <div class="nav-label" style="margin-top:24px">ระบบ</div>
+      <a class="nav-item"><span class="ico">📜</span> Audit Log</a>
+    </nav>
+    <div class="sidebar-foot">
+      <div class="av" id="userAvatar">--</div>
+      <div class="info">
+        <div class="name" id="userName">Loading...</div>
+        <div class="role-txt" id="userRole">--</div>
+      </div>
+      <button class="logout-btn" onclick="handleLogout()">⏻</button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <div class="page-head">
+      <div>
+        <div class="breadcrumb"><a href="index.html">หน้าแรก</a> / Dashboard</div>
+        <h2>📊 Dashboard</h2>
+      </div>
+      <div style="display:flex;gap:12px;align-items:center">
+        <div class="live-badge">
+          <div class="live-dot"></div>
+          Real-time · อัปเดตล่าสุด <span id="lastUpdate">--</span>
+        </div>
+        <button class="btn-refresh" onclick="loadAll()">
+          <span id="refreshIcon">🔄</span> รีเฟรช
+        </button>
+      </div>
+    </div>
+
+    <!-- STAT CARDS -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="top">
+          <div class="icon ic-green">👥</div>
+          <span class="trend trend-up" id="userTrend">+0</span>
+        </div>
+        <div class="val" id="statUsers">--</div>
+        <div class="lbl">ผู้ใช้งานทั้งหมด</div>
+        <div class="sub" id="statUsersub">กำลังโหลด...</div>
+      </div>
+      <div class="stat-card">
+        <div class="top">
+          <div class="icon ic-blue">🏪</div>
+          <span class="trend trend-neu" id="branchTrend">--</span>
+        </div>
+        <div class="val" id="statBranches">--</div>
+        <div class="lbl">สาขาทั้งหมด</div>
+        <div class="sub" id="statBranchSub">กำลังโหลด...</div>
+      </div>
+      <div class="stat-card">
+        <div class="top">
+          <div class="icon ic-purple">💊</div>
+          <span class="trend trend-neu" id="sysTrend">--</span>
+        </div>
+        <div class="val" id="statSystems">--</div>
+        <div class="lbl">ระบบงานทั้งหมด</div>
+        <div class="sub" id="statSystemSub">กำลังโหลด...</div>
+      </div>
+      <div class="stat-card">
+        <div class="top">
+          <div class="icon ic-orange">⏰</div>
+          <span class="trend trend-down" id="expTrend">!</span>
+        </div>
+        <div class="val" id="statExpiring">--</div>
+        <div class="lbl">ใกล้หมดอายุ (≤7 วัน)</div>
+        <div class="sub" id="statExpSub">กำลังโหลด...</div>
+      </div>
+    </div>
+
+    <!-- ROW 2: Chart + Activity -->
+    <div class="grid-3">
+
+      <!-- Login Chart -->
+      <div class="card">
+        <div class="card-head">
+          <h3>📈 Login รายวัน (7 วันล่าสุด)</h3>
+        </div>
+        <div class="card-body">
+          <div class="chart-wrap" id="loginChart">
+            <div class="empty-state">กำลังโหลดกราฟ...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- User Role Donut -->
+      <div class="card">
+        <div class="card-head">
+          <h3>👥 สัดส่วน Role</h3>
+        </div>
+        <div class="card-body">
+          <div class="donut-wrap">
+            <div class="donut">
+              <svg width="120" height="120" viewBox="0 0 120 120">
+                <circle cx="60" cy="60" r="45" fill="none" stroke="#f1f5f9" stroke-width="18"/>
+                <circle id="donut1" cx="60" cy="60" r="45" fill="none" stroke="#7c3aed" stroke-width="18" stroke-dasharray="0 283"/>
+                <circle id="donut2" cx="60" cy="60" r="45" fill="none" stroke="#d4a574" stroke-width="18" stroke-dasharray="0 283"/>
+                <circle id="donut3" cx="60" cy="60" r="45" fill="none" stroke="#2563eb" stroke-width="18" stroke-dasharray="0 283"/>
+                <circle id="donut4" cx="60" cy="60" r="45" fill="none" stroke="#e3ebe6" stroke-width="18" stroke-dasharray="0 283"/>
+              </svg>
+              <div class="donut-center">
+                <div class="num" id="donutTotal">0</div>
+                <div class="sub">คน</div>
+              </div>
+            </div>
+            <div class="donut-legend" id="donutLegend">
+              <div class="legend-item"><div class="legend-dot" style="background:#7c3aed"></div>👑 Super Admin: <strong id="l1">0</strong></div>
+              <div class="legend-item"><div class="legend-dot" style="background:#d4a574"></div>🎖️ Manager: <strong id="l2">0</strong></div>
+              <div class="legend-item"><div class="legend-dot" style="background:#2563eb"></div>👤 Staff: <strong id="l3">0</strong></div>
+              <div class="legend-item"><div class="legend-dot" style="background:#e3ebe6"></div>👁️ Viewer: <strong id="l4">0</strong></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ROW 3: Expiring + Recent Activity -->
+    <div class="grid-2">
+
+      <!-- Expiring Users -->
+      <div class="card">
+        <div class="card-head">
+          <h3>⏰ User ใกล้หมดอายุ</h3>
+          <a href="users.html" style="font-size:13px;color:var(--green-mid);text-decoration:none">จัดการ →</a>
+        </div>
+        <div class="card-body" style="padding:0">
+          <div id="expiringList" style="padding:0 24px">
+            <div class="empty-state">กำลังโหลด...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Activity -->
+      <div class="card">
+        <div class="card-head">
+          <h3>🕐 กิจกรรมล่าสุด</h3>
+          <span style="font-size:12px;color:var(--gray)">20 รายการล่าสุด</span>
+        </div>
+        <div class="card-body" style="padding:0;max-height:400px;overflow-y:auto">
+          <div class="activity-list" id="activityList" style="padding:0 24px">
+            <div class="empty-state">กำลังโหลด...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ROW 4: Systems Status Table -->
+    <div class="card" style="margin-bottom:32px">
+      <div class="card-head">
+        <h3>💊 สถานะระบบงาน</h3>
+        <a href="admin-systems.html" style="font-size:13px;color:var(--green-mid);text-decoration:none">จัดการ →</a>
+      </div>
+      <table class="mini-table">
+        <thead>
+          <tr>
+            <th>ระบบ</th><th>หมวด</th><th>URL</th><th>สถานะ</th>
+          </tr>
+        </thead>
+        <tbody id="systemsTable">
+          <tr><td colspan="4"><div class="empty-state">กำลังโหลด...</div></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+  </main>
+</div>
+
+<script src="firebase-config.js"></script>
+<script>
+  let currentUserData = null;
+
+  // ============================================================
+  // AUTH GUARD
+  // ============================================================
+  requireAdmin(async (userData) => {
+    currentUserData = userData;
+    document.getElementById('userName').textContent = userData.name;
+    document.getElementById('userRole').textContent = ROLE_LABELS[userData.role];
+    document.getElementById('userAvatar').textContent = userData.name.substring(0,2).toUpperCase();
+
+    await loadAll();
+
+    document.getElementById('loadingPage').style.display = 'none';
+    document.getElementById('app').style.display = 'grid';
+
+    // Auto refresh ทุก 60 วินาที
+    setInterval(loadAll, 60000);
+  });
+
+  // ============================================================
+  // LOAD ALL
+  // ============================================================
+  async function loadAll() {
+    document.getElementById('refreshIcon').innerHTML = '<span class="spinner-sm"></span>';
+    document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString('th-TH');
+
+    await Promise.all([
+      loadUserStats(),
+      loadBranchStats(),
+      loadSystemStats(),
+      loadExpiringUsers(),
+      loadRecentActivity(),
+      loadLoginChart()
+    ]);
+
+    document.getElementById('refreshIcon').textContent = '🔄';
+  }
+
+  // ============================================================
+  // USER STATS
+  // ============================================================
+  async function loadUserStats() {
+    try {
+      const snap = await db.collection('users').get();
+      const users = snap.docs.map(d => d.data());
+      const now = new Date();
+
+      let active = 0, expiring = 0, expired = 0;
+      let sa = 0, manager = 0, staff = 0, viewer = 0;
+
+      users.forEach(u => {
+        // Role count
+        if (u.role === 'super_admin') sa++;
+        else if (u.role === 'manager') manager++;
+        else if (u.role === 'staff') staff++;
+        else viewer++;
+
+        if (!u.isActive) { expired++; return; }
+        if (u.expiresAt) {
+          const exp = u.expiresAt.toDate ? u.expiresAt.toDate() : new Date(u.expiresAt);
+          const days = Math.ceil((exp - now) / (1000*60*60*24));
+          if (days <= 0) expired++;
+          else if (days <= 7) { expiring++; active++; }
+          else active++;
+        } else active++;
+      });
+
+      document.getElementById('statUsers').textContent = users.length;
+      document.getElementById('statUsersub').textContent = `✅ ใช้งานได้ ${active} · ⏰ ใกล้หมด ${expiring} · 🚫 หมด/ระงับ ${expired}`;
+      document.getElementById('statExpiring').textContent = expiring;
+      document.getElementById('statExpSub').textContent = expiring > 0 ? `⚠️ ต้องต่ออายุ ${expiring} คน` : '✅ ทุกคนยังใช้งานได้';
+      document.getElementById('userTrend').textContent = `${users.length} คน`;
+
+      // Donut chart
+      const total = users.length || 1;
+      const circumference = 2 * Math.PI * 45;
+      const ratios = [sa, manager, staff, viewer].map(n => n / total);
+      let offset = 0;
+      const colors = ['#7c3aed','#d4a574','#2563eb','#e3ebe6'];
+      ['donut1','donut2','donut3','donut4'].forEach((id, i) => {
+        const el = document.getElementById(id);
+        const dash = ratios[i] * circumference;
+        el.setAttribute('stroke-dasharray', `${dash} ${circumference - dash}`);
+        el.setAttribute('stroke-dashoffset', -offset);
+        offset += dash;
+      });
+      document.getElementById('donutTotal').textContent = users.length;
+      document.getElementById('l1').textContent = sa;
+      document.getElementById('l2').textContent = manager;
+      document.getElementById('l3').textContent = staff;
+      document.getElementById('l4').textContent = viewer;
+
+    } catch(e) { console.error('User stats error:', e); }
+  }
+
+  // ============================================================
+  // BRANCH STATS
+  // ============================================================
+  async function loadBranchStats() {
+    try {
+      const snap = await db.collection('branches').get();
+      const branches = snap.docs.map(d => d.data());
+      const active = branches.filter(b => b.status === 'active').length;
+      const inactive = branches.length - active;
+
+      document.getElementById('statBranches').textContent = branches.length;
+      document.getElementById('statBranchSub').textContent = `✅ เปิด ${active} · ❌ ปิด ${inactive}`;
+      document.getElementById('branchTrend').textContent = `${active} เปิด`;
+    } catch(e) {
+      document.getElementById('statBranches').textContent = '0';
+      document.getElementById('statBranchSub').textContent = 'ยังไม่มีข้อมูล';
+    }
+  }
+
+  // ============================================================
+  // SYSTEM STATS
+  // ============================================================
+  async function loadSystemStats() {
+    try {
+      const snap = await db.collection('systems').get();
+      const systems = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      const active = systems.filter(s => s.status === 'active').length;
+
+      document.getElementById('statSystems').textContent = systems.length;
+      document.getElementById('statSystemSub').textContent = `✅ เปิด ${active} · ❌ ปิด/ปรับปรุง ${systems.length - active}`;
+      document.getElementById('sysTrend').textContent = `${active} active`;
+
+      // Systems table
+      const tbody = document.getElementById('systemsTable');
+      if (systems.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4"><div class="empty-state">ยังไม่มีระบบงาน</div></td></tr>';
+        return;
+      }
+      tbody.innerHTML = systems.map(s => `
+        <tr>
+          <td>
+            <div style="display:flex;align-items:center;gap:10px">
+              <div style="width:36px;height:36px;border-radius:8px;background:${s.color||'#0d4f3c'};display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">${s.icon||'💊'}</div>
+              <div>
+                <div style="font-weight:600;font-size:13px">${s.name}</div>
+                <div style="font-size:11px;color:var(--gray)">${s.desc||''}</div>
+              </div>
+            </div>
+          </td>
+          <td><span class="pill pill-blue">${s.tag||'-'}</span></td>
+          <td><a href="${s.url||'#'}" target="_blank" style="font-size:12px;color:var(--green-mid);font-family:monospace">${s.url||'-'}</a></td>
+          <td>${s.status==='active' ? '<span class="pill pill-green">✓ เปิด</span>' : s.status==='maintenance' ? '<span class="pill pill-orange">🔧 ปรับปรุง</span>' : '<span class="pill pill-red">✕ ปิด</span>'}</td>
+        </tr>`).join('');
+    } catch(e) {
+      document.getElementById('statSystems').textContent = '0';
+    }
+  }
+
+  // ============================================================
+  // EXPIRING USERS
+  // ============================================================
+  async function loadExpiringUsers() {
+    try {
+      const snap = await db.collection('users').get();
+      const now = new Date();
+      const soon = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); // 30 วัน
+
+      const expiring = snap.docs
+        .map(d => ({ id: d.id, ...d.data() }))
+        .filter(u => {
+          if (!u.isActive || !u.expiresAt) return false;
+          const exp = u.expiresAt.toDate ? u.expiresAt.toDate() : new Date(u.expiresAt);
+          return exp > now && exp <= soon;
+        })
+        .sort((a, b) => {
+          const ea = a.expiresAt.toDate ? a.expiresAt.toDate() : new Date(a.expiresAt);
+          const eb = b.expiresAt.toDate ? b.expiresAt.toDate() : new Date(b.expiresAt);
+          return ea - eb;
+        });
+
+      const el = document.getElementById('expiringList');
+      if (expiring.length === 0) {
+        el.innerHTML = '<div class="empty-state">✅ ไม่มี User ที่ใกล้หมดอายุใน 30 วัน</div>';
+        return;
+      }
+
+      el.innerHTML = expiring.map(u => {
+        const exp = u.expiresAt.toDate ? u.expiresAt.toDate() : new Date(u.expiresAt);
+        const days = Math.ceil((exp - now) / (1000*60*60*24));
+        const pillClass = days <= 3 ? 'pill-red' : days <= 7 ? 'pill-orange' : 'pill-gold';
+        const initials = (u.name || u.email || '?').substring(0,2).toUpperCase();
+        return `
+          <div class="expiry-item">
+            <div class="expiry-user">
+              <div class="expiry-avatar">${initials}</div>
+              <div>
+                <div class="expiry-name">${u.name || '-'}</div>
+                <div class="expiry-email">${u.email}</div>
+              </div>
+            </div>
+            <div style="text-align:right">
+              <span class="pill ${pillClass}">⏰ ${days} วัน</span>
+              <div style="font-size:11px;color:var(--gray);margin-top:4px">${exp.toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'numeric'})}</div>
+            </div>
+          </div>`;
+      }).join('');
+    } catch(e) { console.error('Expiring error:', e); }
+  }
+
+  // ============================================================
+  // RECENT ACTIVITY
+  // ============================================================
+  async function loadRecentActivity() {
+    try {
+      const snap = await db.collection('audit_logs')
+        .orderBy('timestamp', 'desc')
+        .limit(20)
+        .get();
+
+      const el = document.getElementById('activityList');
+      if (snap.empty) {
+        el.innerHTML = '<div class="empty-state">ยังไม่มีกิจกรรม</div>';
+        return;
+      }
+
+      const actionMap = {
+        'login':          { icon: '🔐', label: 'เข้าสู่ระบบ', bg: '#e8f5ef' },
+        'logout':         { icon: '👋', label: 'ออกจากระบบ', bg: '#f1f5f9' },
+        'create_user':    { icon: '➕', label: 'สร้าง User ใหม่', bg: '#eff6ff' },
+        'update_user':    { icon: '✏️', label: 'แก้ไข User', bg: '#fef9c3' },
+        'delete_user':    { icon: '🗑️', label: 'ลบ User', bg: '#fef2f2' },
+        'extend_user':    { icon: '⏰', label: 'ต่ออายุ User', bg: '#fff7ed' },
+        'activate_user':  { icon: '✅', label: 'เปิดใช้งาน User', bg: '#e8f5ef' },
+        'deactivate_user':{ icon: '🚫', label: 'ระงับ User', bg: '#fef2f2' },
+        'reset_password': { icon: '🔑', label: 'รีเซ็ตรหัสผ่าน', bg: '#f3e8ff' },
+        'create_system':  { icon: '💊', label: 'เพิ่มระบบใหม่', bg: '#eff6ff' },
+        'update_system':  { icon: '⚙️', label: 'แก้ไขระบบ', bg: '#fef9c3' },
+        'delete_system':  { icon: '🗑️', label: 'ลบระบบ', bg: '#fef2f2' },
+        'create_branch':  { icon: '🏪', label: 'เพิ่มสาขาใหม่', bg: '#eff6ff' },
+        'update_branch':  { icon: '✏️', label: 'แก้ไขสาขา', bg: '#fef9c3' },
+        'delete_branch':  { icon: '🗑️', label: 'ลบสาขา', bg: '#fef2f2' },
+        'view_home':      { icon: '🏠', label: 'เข้าดูหน้าแรก', bg: '#f1f5f9' },
+      };
+
+      el.innerHTML = snap.docs.map(d => {
+        const log = d.data();
+        const info = actionMap[log.action] || { icon: '📋', label: log.action, bg: '#f1f5f9' };
+        const time = log.timestamp ? log.timestamp.toDate().toLocaleString('th-TH', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' }) : '-';
+        return `
+          <div class="activity-item">
+            <div class="activity-icon" style="background:${info.bg}">${info.icon}</div>
+            <div class="activity-info">
+              <div class="action">${info.label}</div>
+              <div class="meta">${log.email || '-'}</div>
+            </div>
+            <div class="activity-time">${time}</div>
+          </div>`;
+      }).join('');
+    } catch(e) { console.error('Activity error:', e); }
+  }
+
+  // ============================================================
+  // LOGIN CHART (จาก audit_logs)
+  // ============================================================
+  async function loadLoginChart() {
+    try {
+      const days7ago = new Date();
+      days7ago.setDate(days7ago.getDate() - 6);
+      days7ago.setHours(0,0,0,0);
+
+      const snap = await db.collection('audit_logs')
+        .where('action', '==', 'login')
+        .where('timestamp', '>=', firebase.firestore.Timestamp.fromDate(days7ago))
+        .orderBy('timestamp', 'asc')
+        .get();
+
+      // สร้าง buckets 7 วัน
+      const buckets = {};
+      const dayNames = ['อา.','จ.','อ.','พ.','พฤ.','ศ.','ส.'];
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        const key = d.toDateString();
+        buckets[key] = { count: 0, label: i === 0 ? 'วันนี้' : dayNames[d.getDay()] };
+      }
+
+      snap.docs.forEach(d => {
+        const ts = d.data().timestamp;
+        if (ts) {
+          const date = ts.toDate().toDateString();
+          if (buckets[date]) buckets[date].count++;
+        }
+      });
+
+      const data = Object.values(buckets);
+      const maxVal = Math.max(...data.map(d => d.count), 1);
+      const chartEl = document.getElementById('loginChart');
+
+      chartEl.innerHTML = data.map(d => {
+        const heightPct = Math.max((d.count / maxVal) * 160, d.count > 0 ? 8 : 4);
+        const color = d.count > 0 ? 'var(--green-mid)' : '#e3ebe6';
+        return `
+          <div class="bar-group">
+            <div class="bar" style="height:${heightPct}px;background:${color}">
+              <div class="bar-tooltip">${d.count} ครั้ง</div>
+            </div>
+            <div class="bar-label">${d.label}<br><small style="color:var(--green-mid);font-weight:600">${d.count||''}</small></div>
+          </div>`;
+      }).join('');
+    } catch(e) {
+      document.getElementById('loginChart').innerHTML = '<div class="empty-state">ไม่สามารถโหลดกราฟได้</div>';
+    }
+  }
+
+  async function handleLogout() {
+    if (confirm('ออกจากระบบ?')) await logout();
+  }
+</script>
+</body>
+</html>
