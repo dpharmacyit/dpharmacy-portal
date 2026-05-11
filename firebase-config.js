@@ -4,7 +4,7 @@
 
 // 🔥 แทนที่ด้วย config ของคุณจาก Firebase Console
 const firebaseConfig = {
-  apiKey: "AIzaSyBiOqKgW0DH80nGoKhBPcL8AI0SBSTIOjk",
+  apiKey: "AIzaSyCKm7QTQffCqdW3u6L-OmDXVeBlieKfQww",
   authDomain: "dpharmacy-portal.firebaseapp.com",
   projectId: "dpharmacy-portal",
   storageBucket: "dpharmacy-portal.firebasestorage.app",
