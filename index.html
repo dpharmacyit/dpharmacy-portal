@@ -62,16 +62,6 @@
 
   .pill{position:absolute;background:white;padding:14px 24px;border-radius:100px;font-size:14px;font-weight:500;box-shadow:0 8px 24px rgba(13,79,60,.12);display:flex;align-items:center;gap:8px}
 
-  .search-section{max-width:1400px;margin:32px auto 0;padding:0 32px}
-  .search-wrap{background:white;border:2px solid var(--line);border-radius:18px;padding:6px;display:flex;align-items:center;transition:all .2s}
-  .search-wrap:focus-within{border-color:var(--green-mid);box-shadow:0 0 0 4px rgba(26,122,94,.1)}
-  .search-wrap input{flex:1;border:none;outline:none;padding:14px 20px;font-size:16px;font-family:inherit;background:transparent}
-  .search-wrap button{padding:12px 28px;background:var(--green-deep);color:white;border:none;border-radius:12px;cursor:pointer;font-family:inherit;font-weight:500}
-  .filter-chips{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
-  .chip{padding:8px 16px;background:white;border:1px solid var(--line);border-radius:20px;font-size:13px;cursor:pointer;transition:all .15s;font-family:inherit}
-  .chip:hover{border-color:var(--green-mid);color:var(--green-mid)}
-  .chip.active{background:var(--green-deep);color:white;border-color:var(--green-deep)}
-
   .section{max-width:1400px;margin:48px auto 0;padding:0 32px}
   .section-head{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:24px}
   .section-title{font-family:'Outfit',sans-serif;font-size:28px;font-weight:700;letter-spacing:-.5px}
@@ -190,21 +180,6 @@
   </div>
 </header>
 
-<!-- Search -->
-<section class="search-section">
-  <div class="search-wrap">
-    <input type="text" id="searchInput" placeholder="🔍 ค้นหาระบบ หรือ สาขา..." oninput="filterAll()">
-    <button onclick="filterAll()">ค้นหา</button>
-  </div>
-  <div class="filter-chips">
-    <div class="chip active" onclick="filterChip(this,'')">ทั้งหมด</div>
-    <div class="chip" onclick="filterChip(this,'ขาย')">ระบบขาย</div>
-    <div class="chip" onclick="filterChip(this,'คลัง')">คลังสินค้า</div>
-    <div class="chip" onclick="filterChip(this,'บัญชี')">บัญชี-การเงิน</div>
-    <div class="chip" onclick="filterChip(this,'บุคคล')">HR</div>
-    <div class="chip" onclick="filterChip(this,'รายงาน')">รายงาน</div>
-  </div>
-</section>
 
 <!-- Systems -->
 <section class="section">
@@ -393,7 +368,7 @@
     }
 
     grid.innerHTML = filtered.map(s => `
-      <a href="${s.url}" class="sys-card">
+      <a href="${s.url}" class="sys-card" target="_blank" rel="noopener noreferrer">
         <div class="sys-icon" style="background:${s.color}">${s.icon}</div>
         <div class="sys-tag">${s.tag}</div>
         <div class="sys-name">${s.name}</div>
@@ -422,7 +397,7 @@
     }
 
     grid.innerHTML = filtered.map(b => `
-      <a href="${b.url}" class="branch-card">
+      <a href="${b.url}" class="branch-card" target="_blank" rel="noopener noreferrer">
         <div class="branch-head">
           <div class="branch-code">${b.code}</div>
           <div class="branch-status" title="ออนไลน์"></div>
@@ -433,20 +408,7 @@
       </a>`).join('');
   }
 
-  // ===== FILTERS =====
-  function filterAll() {
-    renderSystems();
-    renderBranches();
-  }
-
-  function filterChip(el, tag) {
-    currentTag = tag;
-    document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
-    el.classList.add('active');
-    renderSystems();
-  }
-
-  function filterArea(el, area) {
+  // ===== FILTERS =====  function filterArea(el, area) {
     currentArea = area;
     document.querySelectorAll('.branch-tab').forEach(t => t.classList.remove('active'));
     el.classList.add('active');
