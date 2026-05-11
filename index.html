@@ -47,8 +47,8 @@
   .expiry-danger{background:#fef2f2;color:var(--danger)}
 
   /* Dropdown menu */
-  .user-dropdown{position:absolute;top:calc(100% + 8px);right:0;background:white;border:1px solid var(--line);border-radius:14px;padding:8px;min-width:200px;box-shadow:0 8px 24px rgba(0,0,0,.1);display:none;z-index:200}
-  .user-chip:hover .user-dropdown{display:block}
+  .user-dropdown{position:absolute;top:calc(100% + 8px);right:0;background:white;border:1px solid var(--line);border-radius:14px;padding:8px;min-width:220px;box-shadow:0 8px 32px rgba(0,0,0,.15);display:none;z-index:9999}
+  .user-dropdown.open{display:block !important}
   .dropdown-item{padding:10px 14px;border-radius:8px;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:8px;color:var(--ink);text-decoration:none}
   .dropdown-item:hover{background:var(--green-soft)}
   .dropdown-divider{height:1px;background:var(--line);margin:4px 0}
@@ -183,17 +183,18 @@
     <div class="header-actions">
 
       <!-- User Chip + Dropdown -->
-      <div class="user-chip">
+      <div class="user-chip" onclick="toggleDropdown(event)" id="userChip">
         <div class="user-avatar" id="userAvatar">--</div>
         <div>
           <div id="userName" style="font-weight:600;font-size:14px">กำลังโหลด...</div>
           <div id="userExpiry" style="font-size:11px;margin-top:2px"></div>
         </div>
-        <div class="user-dropdown">
+        <div class="user-dropdown" onclick="event.stopPropagation()">
           <div style="padding:10px 14px;font-size:12px;color:var(--gray)" id="dropdownRole">--</div>
           <div class="dropdown-divider"></div>
-          <a href="users.html" class="dropdown-item" id="manageUserBtn">👥 จัดการผู้ใช้</a>
-          <a href="admin-systems.html" class="dropdown-item" id="manageSystemBtn">⚙️ จัดการระบบ</a>
+          <a href="users.html" class="dropdown-item" id="manageUserBtn" onclick="goTo('users.html')">👥 จัดการผู้ใช้</a>
+          <a href="admin-systems.html" class="dropdown-item" id="manageSystemBtn" onclick="goTo('admin-systems.html')">⚙️ จัดการระบบ</a>
+          <a href="dashboard.html" class="dropdown-item" onclick="goTo('dashboard.html')">📊 Dashboard</a>
           <div class="dropdown-divider"></div>
           <div class="dropdown-item danger" onclick="handleLogout()">⏻ ออกจากระบบ</div>
         </div>
@@ -477,6 +478,26 @@
     el.classList.add('active');
     renderBranches();
   }
+
+  // ===== DROPDOWN TOGGLE =====
+  function toggleDropdown(e) {
+    e.stopPropagation();
+    const dropdown = document.querySelector('.user-dropdown');
+    dropdown.classList.toggle('open');
+  }
+
+  function goTo(url) {
+    window.location.href = url;
+  }
+
+  // ปิด dropdown เมื่อคลิกที่อื่น
+  document.addEventListener('click', function(e) {
+    const chip = document.getElementById('userChip');
+    const dropdown = document.querySelector('.user-dropdown');
+    if (chip && !chip.contains(e.target)) {
+      dropdown.classList.remove('open');
+    }
+  });
 
   // ===== LOGOUT =====
   async function handleLogout() {
