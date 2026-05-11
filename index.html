@@ -201,12 +201,7 @@
         <div class="section-sub">คลิกที่สาขาเพื่อเข้าระบบของแต่ละสาขา</div>
       </div>
     </div>
-    <div class="branch-toolbar">
-      <div class="branch-tabs" id="areaTabs">
-        <button class="branch-tab active" onclick="filterArea(this,'')">ทั้งหมด</button>
-      </div>
-      <input type="text" id="branchSearch" placeholder="🔍 ค้นหาสาขา..." oninput="renderBranches()" style="padding:10px 16px;border:1px solid var(--line);border-radius:10px;font-family:inherit;outline:none">
-    </div>
+    
     <div class="branches-grid" id="branchesGrid"></div>
   </div>
 </section>
@@ -249,8 +244,6 @@
   // ===== STATE =====
   let allSystems = [];
   let allBranches = [];
-  let currentArea = '';
-  let currentTag = '';
   let currentUserData = null;
 
   // ===== DATA ตัวอย่าง (จะดึงจาก Firestore ในอนาคต) =====
@@ -332,31 +325,14 @@
 
 
 
-    // สร้าง Area Tabs
-    const areas = [...new Set(allBranches.map(b => b.area))];
-    const tabsEl = document.getElementById('areaTabs');
-    areas.forEach(area => {
-      const btn = document.createElement('button');
-      btn.className = 'branch-tab';
-      btn.textContent = area;
-      btn.onclick = function(){ filterArea(this, area); };
-      tabsEl.appendChild(btn);
-    });
-
     renderSystems();
     renderBranches();
   }
 
   // ===== RENDER SYSTEMS =====
   function renderSystems() {
-    const search = document.getElementById('searchInput').value.toLowerCase();
     const grid = document.getElementById('systemsGrid');
-
-    const filtered = allSystems.filter(s => {
-      if (currentTag && s.tag !== currentTag) return false;
-      if (search && !s.name.toLowerCase().includes(search) && !s.desc.toLowerCase().includes(search)) return false;
-      return true;
-    });
+    const filtered = allSystems;
 
     if (filtered.length === 0) {
       grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--gray)">
@@ -378,14 +354,8 @@
 
   // ===== RENDER BRANCHES =====
   function renderBranches() {
-    const search = document.getElementById('branchSearch').value.toLowerCase();
     const grid = document.getElementById('branchesGrid');
-
-    const filtered = allBranches.filter(b => {
-      if (currentArea && b.area !== currentArea) return false;
-      if (search && !b.name.toLowerCase().includes(search) && !b.code.toLowerCase().includes(search)) return false;
-      return true;
-    });
+    const filtered = allBranches;
 
     if (filtered.length === 0) {
       grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--gray)">
@@ -408,12 +378,7 @@
       </a>`).join('');
   }
 
-  // ===== FILTERS =====  function filterArea(el, area) {
-    currentArea = area;
-    document.querySelectorAll('.branch-tab').forEach(t => t.classList.remove('active'));
-    el.classList.add('active');
-    renderBranches();
-  }
+
 
   // ===== DROPDOWN TOGGLE =====
   function toggleDropdown(e) {
