@@ -8,7 +8,7 @@
 //    2. Firestore Security Rules (เฉพาะ Email/Password)
 //    3. ระบบ Role 4 ระดับ
 const firebaseConfig = {
-  apiKey: "ใส่ KEY ใหม่ของคุณตรงนี้",
+  apiKey: "AIzaSyCKm7QTQffCqdW3u6L-OmDXVeBlieKfQww",
   authDomain: "dpharmacy-portal.firebaseapp.com",
   projectId: "dpharmacy-portal",
   storageBucket: "dpharmacy-portal.firebasestorage.app",
