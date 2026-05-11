@@ -384,8 +384,18 @@
 
   // ===== LOAD DATA =====
   async function loadData() {
-    allSystems = defaultSystems;
-    allBranches = defaultBranches;
+    // ดึงจาก Firestore จริง ถ้าไม่มีใช้ default
+    try {
+      const [sysSnap, branchSnap] = await Promise.all([
+        db.collection('systems').where('status','==','active').orderBy('createdAt','asc').get(),
+        db.collection('branches').where('status','==','active').orderBy('code','asc').get()
+      ]);
+      allSystems = sysSnap.empty ? defaultSystems : sysSnap.docs.map(d => ({id:d.id,...d.data()}));
+      allBranches = branchSnap.empty ? defaultBranches : branchSnap.docs.map(d => ({id:d.id,...d.data()}));
+    } catch(e) {
+      allSystems = defaultSystems;
+      allBranches = defaultBranches;
+    }
 
     // อัปเดต stats
     document.getElementById('statBranch').textContent = allBranches.length;

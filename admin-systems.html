@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>จัดการระบบ & สาขา | Dpharmacy Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;800&display=swap" rel="stylesheet">
+
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+
+<style>
+  :root{
+    --green-deep:#0d4f3c;--green-mid:#1a7a5e;--green-soft:#e8f5ef;
+    --cream:#fdfcf7;--ink:#0f1f1a;--gray:#6b7d75;
+    --line:#e3ebe6;--accent:#ff6b4a;--gold:#d4a574;--danger:#dc2626;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'IBM Plex Sans Thai','Outfit',sans-serif;background:#f4f7f5;color:var(--ink);min-height:100vh}
+  .app{display:grid;grid-template-columns:260px 1fr;min-height:100vh}
+
+  /* SIDEBAR */
+  .sidebar{background:var(--ink);color:white;padding:24px 0;position:sticky;top:0;height:100vh;display:flex;flex-direction:column}
+  .sidebar-logo{padding:0 24px 24px;border-bottom:1px solid rgba(255,255,255,.1);display:flex;align-items:center;gap:12px}
+  .sidebar-logo .icon{width:40px;height:40px;background:linear-gradient(135deg,var(--green-mid),var(--green-deep));border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:20px}
+  .sidebar-logo h1{font-family:'Outfit',sans-serif;font-size:18px;font-weight:700}
+  .sidebar-logo p{font-size:11px;opacity:.5;letter-spacing:1.5px;text-transform:uppercase}
+  .nav-section{padding:24px 0;flex:1;overflow-y:auto}
+  .nav-label{padding:0 24px 8px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;opacity:.5}
+  .nav-item{display:flex;align-items:center;gap:12px;padding:12px 24px;color:white;text-decoration:none;font-size:14px;border-left:3px solid transparent;transition:all .15s;cursor:pointer}
+  .nav-item:hover{background:rgba(255,255,255,.05)}
+  .nav-item.active{background:rgba(26,122,94,.15);border-left-color:var(--green-mid);color:#a8e6cf}
+  .nav-item .ico{width:20px;text-align:center}
+  .sidebar-foot{padding:16px 24px;border-top:1px solid rgba(255,255,255,.1);display:flex;align-items:center;gap:12px}
+  .sidebar-foot .av{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--accent));display:flex;align-items:center;justify-content:center;font-weight:600;font-size:13px}
+  .sidebar-foot .info{flex:1;min-width:0}
+  .sidebar-foot .name{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .sidebar-foot .role-txt{font-size:11px;opacity:.6}
+  .logout-btn{background:transparent;border:none;color:white;cursor:pointer;opacity:.5;font-size:18px}
+  .logout-btn:hover{opacity:1}
+
+  /* MAIN */
+  .main{padding:32px 40px}
+  .page-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;flex-wrap:wrap;gap:16px}
+  .page-head h2{font-family:'Outfit',sans-serif;font-size:32px;font-weight:700;letter-spacing:-.5px}
+  .breadcrumb{font-size:13px;color:var(--gray);margin-bottom:8px}
+  .breadcrumb a{color:var(--green-mid);text-decoration:none}
+
+  /* TABS */
+  .page-tabs{display:flex;gap:4px;background:white;padding:4px;border-radius:14px;border:1px solid var(--line);width:fit-content;margin-bottom:24px}
+  .page-tab{padding:10px 24px;font-size:14px;border:none;background:transparent;border-radius:10px;cursor:pointer;font-family:inherit;color:var(--gray);font-weight:500;transition:all .15s}
+  .page-tab.active{background:var(--ink);color:white}
+
+  .btn{padding:10px 20px;border-radius:10px;border:none;cursor:pointer;font-family:inherit;font-size:14px;font-weight:500;display:inline-flex;align-items:center;gap:6px;transition:all .15s}
+  .btn-primary{background:var(--green-deep);color:white}
+  .btn-primary:hover{background:var(--green-mid)}
+  .btn-ghost{background:white;border:1px solid var(--line);color:var(--ink)}
+  .btn-ghost:hover{border-color:var(--green-mid)}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+
+  /* CARD */
+  .card{background:white;border:1px solid var(--line);border-radius:18px;overflow:hidden;margin-bottom:24px}
+  .card-head{padding:18px 24px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+  .card-head h3{font-size:16px;font-weight:600}
+  .card-tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .card-search{padding:8px 14px;border:1px solid var(--line);border-radius:8px;font-family:inherit;outline:none;font-size:13px}
+
+  table{width:100%;border-collapse:collapse}
+  thead{background:#f9fbfa}
+  th{padding:12px 24px;text-align:left;font-size:12px;font-weight:600;color:var(--gray);letter-spacing:.5px;text-transform:uppercase;border-bottom:1px solid var(--line)}
+  td{padding:14px 24px;font-size:14px;border-bottom:1px solid #f1f4f2;vertical-align:middle}
+  tbody tr:hover{background:#f9fbfa}
+  tbody tr:last-child td{border-bottom:none}
+
+  .sys-preview{display:flex;align-items:center;gap:12px}
+  .sys-icon-prev{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;color:white;flex-shrink:0}
+  .sys-info .name{font-weight:600}
+  .sys-info .desc{font-size:12px;color:var(--gray);margin-top:2px}
+
+  .url-text{font-family:'Outfit',monospace;font-size:12px;background:#f4f7f5;padding:4px 10px;border-radius:6px;color:var(--gray);max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block}
+
+  .pill{display:inline-flex;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600;letter-spacing:.5px}
+  .pill-green{background:var(--green-soft);color:var(--green-deep)}
+  .pill-red{background:#fef2f2;color:var(--danger)}
+  .pill-blue{background:#eff6ff;color:#2563eb}
+  .pill-gray{background:#f1f5f9;color:#475569}
+  .pill-orange{background:#fff7ed;color:#ea580c}
+
+  .row-actions{display:flex;gap:6px}
+  .ic-btn{width:32px;height:32px;border-radius:8px;border:none;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--gray);transition:all .15s;font-size:16px}
+  .ic-btn:hover{background:var(--green-soft);color:var(--green-deep)}
+  .ic-btn.del:hover{background:#fef2f2;color:var(--danger)}
+
+  .empty{padding:60px 24px;text-align:center;color:var(--gray)}
+  .empty .ic{font-size:48px;margin-bottom:12px}
+
+  /* MODAL */
+  .modal-bg{position:fixed;inset:0;background:rgba(15,31,26,.5);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:200;padding:20px}
+  .modal-bg.show{display:flex}
+  .modal{background:white;border-radius:20px;width:100%;max-width:560px;max-height:90vh;overflow-y:auto}
+  .modal-head{padding:20px 24px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:white;z-index:10}
+  .modal-head h3{font-size:18px;font-weight:600}
+  .modal-close{width:32px;height:32px;border-radius:8px;border:none;background:#f4f7f5;cursor:pointer;font-size:18px}
+  .modal-body{padding:24px}
+  .modal-foot{padding:16px 24px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:8px;position:sticky;bottom:0;background:white}
+
+  .field{margin-bottom:16px}
+  .field label{display:block;font-size:13px;font-weight:500;margin-bottom:6px}
+  .field label .req{color:var(--danger)}
+  .field input,.field select,.field textarea{width:100%;padding:11px 14px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;outline:none;transition:border-color .15s}
+  .field input:focus,.field select:focus,.field textarea:focus{border-color:var(--green-mid);box-shadow:0 0 0 3px rgba(26,122,94,.1)}
+  .field-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+  /* ICON PICKER */
+  .icon-picker-wrap{border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .icon-picker-search{width:100%;padding:10px 14px;border:none;border-bottom:1px solid var(--line);font-family:inherit;font-size:14px;outline:none}
+  .icon-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:4px;padding:8px;max-height:120px;overflow-y:auto}
+  .icon-opt{aspect-ratio:1;border:none;background:transparent;border-radius:8px;cursor:pointer;font-size:20px;transition:all .15s;display:flex;align-items:center;justify-content:center}
+  .icon-opt:hover{background:var(--green-soft)}
+  .icon-opt.selected{background:var(--green-deep);color:white}
+  .selected-icon-preview{display:flex;align-items:center;gap:12px;padding:10px 14px;background:#f9fbfa;border-radius:10px;margin-bottom:8px}
+  .preview-icon{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px;color:white}
+
+  /* COLOR PICKER */
+  .color-grid{display:flex;gap:8px;flex-wrap:wrap;padding:4px}
+  .color-opt{width:36px;height:36px;border-radius:8px;border:3px solid transparent;cursor:pointer;transition:all .15s}
+  .color-opt:hover{transform:scale(1.1)}
+  .color-opt.selected{border-color:var(--ink);transform:scale(1.15)}
+
+  .alert-error{padding:12px 16px;border-radius:10px;font-size:13px;margin-bottom:16px;background:#fef2f2;border-left:3px solid var(--danger);color:#7f1d1d;display:none}
+  .alert-error.show{display:flex;align-items:center;gap:10px}
+
+  .spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:white;border-radius:50%;animation:spin .8s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  .loading-page{display:flex;align-items:center;justify-content:center;min-height:100vh;flex-direction:column;gap:16px;color:var(--gray)}
+
+  @media(max-width:900px){
+    .app{grid-template-columns:1fr}
+    .sidebar{display:none}
+    .main{padding:20px}
+    .field-grid{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+
+<div id="loadingPage" class="loading-page">
+  <div style="font-size:48px">💊</div>
+  <div>กำลังโหลด...</div>
+</div>
+
+<div class="app" id="app" style="display:none">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="icon">D</div>
+      <div><h1>Dpharmacy</h1><p>Admin Panel</p></div>
+    </div>
+    <nav class="nav-section">
+      <div class="nav-label">หลัก</div>
+      <a class="nav-item" href="index.html"><span class="ico">🏠</span> หน้าแรก</a>
+      <a class="nav-item active"><span class="ico">⚙️</span> จัดการระบบ+สาขา</a>
+      <a class="nav-item" href="users.html"><span class="ico">👥</span> จัดการผู้ใช้</a>
+      <div class="nav-label" style="margin-top:24px">ระบบ</div>
+      <a class="nav-item"><span class="ico">📜</span> Audit Log</a>
+      <a class="nav-item"><span class="ico">⚙️</span> ตั้งค่า</a>
+    </nav>
+    <div class="sidebar-foot">
+      <div class="av" id="userAvatar">--</div>
+      <div class="info">
+        <div class="name" id="userName">Loading...</div>
+        <div class="role-txt" id="userRole">--</div>
+      </div>
+      <button class="logout-btn" onclick="handleLogout()">⏻</button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <div class="page-head">
+      <div>
+        <div class="breadcrumb"><a href="index.html">หน้าแรก</a> / Admin / จัดการระบบ & สาขา</div>
+        <h2>จัดการระบบ & สาขา ⚙️</h2>
+      </div>
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-ghost" onclick="loadAll()">🔄 รีเฟรช</button>
+        <button class="btn btn-primary" id="addBtn" onclick="openAddModal()">+ เพิ่มใหม่</button>
+      </div>
+    </div>
+
+    <!-- PAGE TABS -->
+    <div class="page-tabs">
+      <button class="page-tab active" onclick="switchTab('systems',this)">💊 ระบบงาน (<span id="sysCount">0</span>)</button>
+      <button class="page-tab" onclick="switchTab('branches',this)">🏪 สาขา (<span id="branchCount">0</span>)</button>
+    </div>
+
+    <!-- SYSTEMS TABLE -->
+    <div id="systemsSection">
+      <div class="card">
+        <div class="card-head">
+          <h3>รายการระบบงาน</h3>
+          <div class="card-tools">
+            <input type="text" class="card-search" id="sysSearch" placeholder="🔍 ค้นหา..." oninput="renderSystems()" style="width:200px">
+            <select class="card-search" id="sysFilter" onchange="renderSystems()" style="width:auto">
+              <option value="">ทุกหมวด</option>
+              <option>ขาย</option><option>คลัง</option><option>บัญชี</option>
+              <option>บุคคล</option><option>รายงาน</option><option>ลูกค้า</option>
+              <option>จัดซื้อ</option><option>อบรม</option><option>อื่นๆ</option>
+            </select>
+          </div>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>ระบบ</th><th>หมวด</th><th>URL</th>
+              <th>สถานะ</th><th>อัปเดต</th><th></th>
+            </tr>
+          </thead>
+          <tbody id="sysTbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- BRANCHES TABLE -->
+    <div id="branchesSection" style="display:none">
+      <div class="card">
+        <div class="card-head">
+          <h3>รายการสาขา</h3>
+          <div class="card-tools">
+            <input type="text" class="card-search" id="branchSearch" placeholder="🔍 ค้นหา..." oninput="renderBranches()" style="width:200px">
+            <select class="card-search" id="branchFilter" onchange="renderBranches()" style="width:auto">
+              <option value="">ทุกพื้นที่</option>
+              <option>กรุงเทพฯ</option><option>ภาคกลาง</option>
+              <option>ภาคเหนือ</option><option>ภาคใต้</option><option>ภาคอีสาน</option>
+            </select>
+          </div>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>รหัส</th><th>ชื่อสาขา</th><th>พื้นที่</th>
+              <th>URL</th><th>สถานะ</th><th></th>
+            </tr>
+          </thead>
+          <tbody id="branchTbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- SYSTEM MODAL -->
+<div class="modal-bg" id="sysModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="sysModalTitle">+ เพิ่มระบบใหม่</h3>
+      <button class="modal-close" onclick="closeSysModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="alert-error" id="sysError">❌ <span id="sysErrorText"></span></div>
+
+      <div class="field">
+        <label>ชื่อระบบ <span class="req">*</span></label>
+        <input type="text" id="s_name" placeholder="เช่น POS ระบบขาย">
+      </div>
+
+      <div class="field-grid">
+        <div class="field">
+          <label>หมวดหมู่</label>
+          <select id="s_tag">
+            <option>ขาย</option><option>คลัง</option><option>บัญชี</option>
+            <option>บุคคล</option><option>รายงาน</option><option>ลูกค้า</option>
+            <option>จัดซื้อ</option><option>อบรม</option><option>อื่นๆ</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>สถานะ</label>
+          <select id="s_status">
+            <option value="active">✅ เปิดใช้งาน</option>
+            <option value="maintenance">🔧 กำลังปรับปรุง</option>
+            <option value="off">❌ ปิด</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>URL ลิงก์ <span class="req">*</span></label>
+        <input type="url" id="s_url" placeholder="https://pos.dpharmacy.co.th">
+      </div>
+
+      <div class="field">
+        <label>คำอธิบาย</label>
+        <textarea id="s_desc" rows="2" placeholder="อธิบายสั้นๆ ว่าระบบนี้ใช้ทำอะไร"></textarea>
+      </div>
+
+      <div class="field">
+        <label>ไอคอน <span class="req">*</span></label>
+        <div class="selected-icon-preview">
+          <div class="preview-icon" id="iconPreview" style="background:#0d4f3c">💊</div>
+          <div>
+            <div style="font-weight:600" id="iconPreviewName">💊 ไอคอนที่เลือก</div>
+            <div style="font-size:12px;color:var(--gray)">คลิกไอคอนด้านล่างเพื่อเปลี่ยน</div>
+          </div>
+        </div>
+        <div class="icon-picker-wrap">
+          <input type="text" class="icon-picker-search" placeholder="🔍 ค้นหาไอคอน..." oninput="filterIcons(this.value)">
+          <div class="icon-grid" id="iconGrid"></div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>สีพื้นหลังไอคอน</label>
+        <div class="color-grid" id="colorGrid"></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeSysModal()">ยกเลิก</button>
+      <button class="btn btn-primary" id="sysSaveBtn" onclick="saveSystem()">💾 บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<!-- BRANCH MODAL -->
+<div class="modal-bg" id="branchModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="branchModalTitle">+ เพิ่มสาขาใหม่</h3>
+      <button class="modal-close" onclick="closeBranchModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="alert-error" id="branchError">❌ <span id="branchErrorText"></span></div>
+
+      <div class="field-grid">
+        <div class="field">
+          <label>รหัสสาขา <span class="req">*</span></label>
+          <input type="text" id="b_code" placeholder="เช่น BKK001" style="text-transform:uppercase">
+        </div>
+        <div class="field">
+          <label>พื้นที่</label>
+          <select id="b_area">
+            <option>กรุงเทพฯ</option><option>ภาคกลาง</option>
+            <option>ภาคเหนือ</option><option>ภาคใต้</option><option>ภาคอีสาน</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>ชื่อสาขา <span class="req">*</span></label>
+        <input type="text" id="b_name" placeholder="เช่น สาขาสีลม">
+      </div>
+
+      <div class="field">
+        <label>URL ระบบของสาขา</label>
+        <input type="url" id="b_url" placeholder="https://pos.dpharmacy.co.th/branch/BKK001">
+      </div>
+
+      <div class="field-grid">
+        <div class="field">
+          <label>เบอร์โทรสาขา</label>
+          <input type="text" id="b_phone" placeholder="02-XXX-XXXX">
+        </div>
+        <div class="field">
+          <label>สถานะ</label>
+          <select id="b_status">
+            <option value="active">✅ เปิดใช้งาน</option>
+            <option value="inactive">❌ ปิด</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>ที่อยู่สาขา</label>
+        <textarea id="b_address" rows="2" placeholder="ที่อยู่สาขา..."></textarea>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeBranchModal()">ยกเลิก</button>
+      <button class="btn btn-primary" id="branchSaveBtn" onclick="saveBranch()">💾 บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<script src="firebase-config.js"></script>
+<script>
+  // ============================================================
+  // STATE
+  // ============================================================
+  let allSystems = [];
+  let allBranches = [];
+  let currentTab = 'systems';
+  let editingSysId = null;
+  let editingBranchId = null;
+  let selectedIcon = '💊';
+  let selectedColor = '#0d4f3c';
+  let currentUserData = null;
+
+  const ICONS = [
+    '💊','📦','👥','📊','❤️','🛒','💰','🎓','📈','📋','🏥','💉',
+    '🩺','📱','💻','🔬','📚','🎯','⚡','🔔','📅','📞','🌡️','💼',
+    '🏪','🚑','📌','🔐','📂','🖨️','📡','🧪','🧬','🏷️','🛡️','⚙️',
+    '📣','💡','🗂️','🔍','✅','📝','🗃️','🖥️','📮','🏆','🎪','🌿'
+  ];
+
+  const COLORS = [
+    '#0d4f3c','#1a7a5e','#16a34a','#0891b2','#2563eb','#7c3aed',
+    '#a21caf','#dc2626','#ea580c','#d97706','#d4a574','#ff6b4a',
+    '#475569','#0f172a','#166534','#1e40af'
+  ];
+
+  // ============================================================
+  // AUTH GUARD
+  // ============================================================
+  requireAdmin(async (userData) => {
+    currentUserData = userData;
+    document.getElementById('userName').textContent = userData.name;
+    document.getElementById('userRole').textContent = ROLE_LABELS[userData.role];
+    document.getElementById('userAvatar').textContent = userData.name.substring(0,2).toUpperCase();
+
+    renderIconPicker();
+    renderColorPicker();
+    await loadAll();
+
+    document.getElementById('loadingPage').style.display = 'none';
+    document.getElementById('app').style.display = 'grid';
+  });
+
+  // ============================================================
+  // LOAD ALL DATA
+  // ============================================================
+  async function loadAll() {
+    await Promise.all([loadSystems(), loadBranches()]);
+  }
+
+  async function loadSystems() {
+    try {
+      const snap = await db.collection('systems').orderBy('createdAt','desc').get();
+      allSystems = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      document.getElementById('sysCount').textContent = allSystems.length;
+      renderSystems();
+    } catch(e) {
+      // ถ้ายังไม่มี collection → ใช้ข้อมูลว่าง
+      allSystems = [];
+      document.getElementById('sysCount').textContent = 0;
+      renderSystems();
+    }
+  }
+
+  async function loadBranches() {
+    try {
+      const snap = await db.collection('branches').orderBy('code','asc').get();
+      allBranches = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      document.getElementById('branchCount').textContent = allBranches.length;
+      renderBranches();
+    } catch(e) {
+      allBranches = [];
+      document.getElementById('branchCount').textContent = 0;
+      renderBranches();
+    }
+  }
+
+  // ============================================================
+  // TAB SWITCH
+  // ============================================================
+  function switchTab(tab, el) {
+    currentTab = tab;
+    document.querySelectorAll('.page-tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    document.getElementById('systemsSection').style.display = tab === 'systems' ? 'block' : 'none';
+    document.getElementById('branchesSection').style.display = tab === 'branches' ? 'block' : 'none';
+    document.getElementById('addBtn').textContent = tab === 'systems' ? '+ เพิ่มระบบใหม่' : '+ เพิ่มสาขาใหม่';
+  }
+
+  function openAddModal() {
+    if (currentTab === 'systems') openSysModal('add');
+    else openBranchModal('add');
+  }
+
+  // ============================================================
+  // RENDER SYSTEMS
+  // ============================================================
+  function renderSystems() {
+    const search = document.getElementById('sysSearch').value.toLowerCase();
+    const filter = document.getElementById('sysFilter').value;
+    const tbody = document.getElementById('sysTbody');
+
+    let filtered = allSystems.filter(s => {
+      if (filter && s.tag !== filter) return false;
+      if (search && !s.name?.toLowerCase().includes(search) && !s.desc?.toLowerCase().includes(search)) return false;
+      return true;
+    });
+
+    if (filtered.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="6"><div class="empty"><div class="ic">💊</div><div>${allSystems.length === 0 ? 'ยังไม่มีระบบงาน กด "+ เพิ่มระบบใหม่" ได้เลย' : 'ไม่พบที่ค้นหา'}</div></div></td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = filtered.map(s => `
+      <tr>
+        <td>
+          <div class="sys-preview">
+            <div class="sys-icon-prev" style="background:${s.color||'#0d4f3c'}">${s.icon||'💊'}</div>
+            <div class="sys-info">
+              <div class="name">${s.name}</div>
+              <div class="desc">${s.desc||'-'}</div>
+            </div>
+          </div>
+        </td>
+        <td><span class="pill pill-blue">${s.tag||'-'}</span></td>
+        <td><a href="${s.url||'#'}" target="_blank" class="url-text">${s.url||'-'}</a></td>
+        <td>${renderSysStatus(s.status)}</td>
+        <td style="color:var(--gray);font-size:12px">${s.updatedAt ? formatDate(s.updatedAt) : '-'}</td>
+        <td>
+          <div class="row-actions">
+            <button class="ic-btn" onclick="openSysModal('edit','${s.id}')" title="แก้ไข">✏️</button>
+            <button class="ic-btn" onclick="toggleSysStatus('${s.id}')" title="เปิด/ปิด">${s.status==='active'?'🔒':'🔓'}</button>
+            <button class="ic-btn del" onclick="deleteSys('${s.id}','${s.name}')" title="ลบ">🗑️</button>
+          </div>
+        </td>
+      </tr>`).join('');
+  }
+
+  function renderSysStatus(status) {
+    if (status === 'active')      return '<span class="pill pill-green">✓ เปิดใช้งาน</span>';
+    if (status === 'maintenance') return '<span class="pill pill-orange">🔧 ปรับปรุง</span>';
+    return '<span class="pill pill-red">✕ ปิด</span>';
+  }
+
+  // ============================================================
+  // RENDER BRANCHES
+  // ============================================================
+  function renderBranches() {
+    const search = document.getElementById('branchSearch').value.toLowerCase();
+    const filter = document.getElementById('branchFilter').value;
+    const tbody = document.getElementById('branchTbody');
+
+    let filtered = allBranches.filter(b => {
+      if (filter && b.area !== filter) return false;
+      if (search && !b.name?.toLowerCase().includes(search) && !b.code?.toLowerCase().includes(search)) return false;
+      return true;
+    });
+
+    if (filtered.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="6"><div class="empty"><div class="ic">🏪</div><div>${allBranches.length === 0 ? 'ยังไม่มีสาขา กด "+ เพิ่มสาขาใหม่" ได้เลย' : 'ไม่พบที่ค้นหา'}</div></div></td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = filtered.map(b => `
+      <tr>
+        <td><span class="pill pill-gray" style="font-family:'Outfit',monospace;letter-spacing:1px">${b.code}</span></td>
+        <td style="font-weight:600">${b.name}</td>
+        <td>${b.area||'-'}</td>
+        <td><a href="${b.url||'#'}" target="_blank" class="url-text">${b.url||'-'}</a></td>
+        <td>${b.status==='active' ? '<span class="pill pill-green">✓ เปิด</span>' : '<span class="pill pill-red">✕ ปิด</span>'}</td>
+        <td>
+          <div class="row-actions">
+            <button class="ic-btn" onclick="openBranchModal('edit','${b.id}')" title="แก้ไข">✏️</button>
+            <button class="ic-btn" onclick="toggleBranchStatus('${b.id}')" title="เปิด/ปิด">${b.status==='active'?'🔒':'🔓'}</button>
+            <button class="ic-btn del" onclick="deleteBranch('${b.id}','${b.name}')" title="ลบ">🗑️</button>
+          </div>
+        </td>
+      </tr>`).join('');
+  }
+
+  function formatDate(ts) {
+    const d = ts.toDate ? ts.toDate() : new Date(ts);
+    return d.toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'numeric'});
+  }
+
+  // ============================================================
+  // ICON & COLOR PICKER
+  // ============================================================
+  function renderIconPicker(filter = '') {
+    const grid = document.getElementById('iconGrid');
+    const icons = filter ? ICONS.filter(i => i.includes(filter)) : ICONS;
+    grid.innerHTML = icons.map(i =>
+      `<button type="button" class="icon-opt ${i===selectedIcon?'selected':''}" onclick="pickIcon('${i}')">${i}</button>`
+    ).join('');
+  }
+
+  function filterIcons(val) { renderIconPicker(val); }
+
+  function pickIcon(icon) {
+    selectedIcon = icon;
+    document.getElementById('iconPreview').textContent = icon;
+    document.getElementById('iconPreviewName').textContent = icon + ' ไอคอนที่เลือก';
+    renderIconPicker();
+  }
+
+  function renderColorPicker() {
+    document.getElementById('colorGrid').innerHTML = COLORS.map(c =>
+      `<div class="color-opt ${c===selectedColor?'selected':''}" style="background:${c}" onclick="pickColor('${c}')"></div>`
+    ).join('');
+  }
+
+  function pickColor(color) {
+    selectedColor = color;
+    document.getElementById('iconPreview').style.background = color;
+    renderColorPicker();
+  }
+
+  // ============================================================
+  // SYSTEM MODAL
+  // ============================================================
+  function openSysModal(mode, id = null) {
+    editingSysId = null;
+    selectedIcon = '💊';
+    selectedColor = '#0d4f3c';
+
+    if (mode === 'edit' && id) {
+      const s = allSystems.find(x => x.id === id);
+      if (!s) return;
+      editingSysId = id;
+      document.getElementById('sysModalTitle').textContent = '✏️ แก้ไข: ' + s.name;
+      document.getElementById('s_name').value = s.name || '';
+      document.getElementById('s_tag').value = s.tag || 'ขาย';
+      document.getElementById('s_url').value = s.url || '';
+      document.getElementById('s_desc').value = s.desc || '';
+      document.getElementById('s_status').value = s.status || 'active';
+      selectedIcon = s.icon || '💊';
+      selectedColor = s.color || '#0d4f3c';
+    } else {
+      document.getElementById('sysModalTitle').textContent = '+ เพิ่มระบบใหม่';
+      document.getElementById('s_name').value = '';
+      document.getElementById('s_url').value = '';
+      document.getElementById('s_desc').value = '';
+      document.getElementById('s_tag').value = 'ขาย';
+      document.getElementById('s_status').value = 'active';
+    }
+
+    document.getElementById('iconPreview').textContent = selectedIcon;
+    document.getElementById('iconPreview').style.background = selectedColor;
+    document.getElementById('iconPreviewName').textContent = selectedIcon + ' ไอคอนที่เลือก';
+    hideSysError();
+    renderIconPicker();
+    renderColorPicker();
+    document.getElementById('sysModal').classList.add('show');
+  }
+
+  function closeSysModal() { document.getElementById('sysModal').classList.remove('show'); }
+  function showSysError(msg) {
+    document.getElementById('sysErrorText').textContent = msg;
+    document.getElementById('sysError').classList.add('show');
+  }
+  function hideSysError() { document.getElementById('sysError').classList.remove('show'); }
+
+  async function saveSystem() {
+    hideSysError();
+    const name = document.getElementById('s_name').value.trim();
+    const url = document.getElementById('s_url').value.trim();
+    if (!name || !url) { showSysError('กรุณากรอกชื่อระบบและ URL'); return; }
+
+    const btn = document.getElementById('sysSaveBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> กำลังบันทึก...';
+
+    const data = {
+      name,
+      tag: document.getElementById('s_tag').value,
+      url,
+      desc: document.getElementById('s_desc').value.trim(),
+      status: document.getElementById('s_status').value,
+      icon: selectedIcon,
+      color: selectedColor,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      updatedBy: currentUserData.email
+    };
+
+    try {
+      if (editingSysId) {
+        await db.collection('systems').doc(editingSysId).update(data);
+        await logActivity('update_system', { id: editingSysId, name });
+      } else {
+        data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+        data.createdBy = currentUserData.email;
+        await db.collection('systems').add(data);
+        await logActivity('create_system', { name });
+      }
+      closeSysModal();
+      await loadSystems();
+      alert('✅ บันทึกสำเร็จ!');
+    } catch(e) {
+      showSysError(e.message);
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '💾 บันทึก';
+    }
+  }
+
+  async function toggleSysStatus(id) {
+    const s = allSystems.find(x => x.id === id);
+    if (!s) return;
+    const newStatus = s.status === 'active' ? 'off' : 'active';
+    if (!confirm(`${newStatus==='active'?'เปิดใช้งาน':'ปิด'}ระบบ "${s.name}"?`)) return;
+    await db.collection('systems').doc(id).update({
+      status: newStatus,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      updatedBy: currentUserData.email
+    });
+    await logActivity('toggle_system', { id, name: s.name, status: newStatus });
+    await loadSystems();
+  }
+
+  async function deleteSys(id, name) {
+    if (!confirm(`⚠️ ลบระบบ "${name}" ออกจากระบบ?\n\nระบบนี้จะหายไปจากหน้าแรกด้วย`)) return;
+    await db.collection('systems').doc(id).delete();
+    await logActivity('delete_system', { id, name });
+    await loadSystems();
+    alert('✅ ลบสำเร็จ');
+  }
+
+  // ============================================================
+  // BRANCH MODAL
+  // ============================================================
+  function openBranchModal(mode, id = null) {
+    editingBranchId = null;
+
+    if (mode === 'edit' && id) {
+      const b = allBranches.find(x => x.id === id);
+      if (!b) return;
+      editingBranchId = id;
+      document.getElementById('branchModalTitle').textContent = '✏️ แก้ไข: ' + b.name;
+      document.getElementById('b_code').value = b.code || '';
+      document.getElementById('b_name').value = b.name || '';
+      document.getElementById('b_area').value = b.area || 'กรุงเทพฯ';
+      document.getElementById('b_url').value = b.url || '';
+      document.getElementById('b_phone').value = b.phone || '';
+      document.getElementById('b_address').value = b.address || '';
+      document.getElementById('b_status').value = b.status || 'active';
+    } else {
+      document.getElementById('branchModalTitle').textContent = '+ เพิ่มสาขาใหม่';
+      document.getElementById('b_code').value = '';
+      document.getElementById('b_name').value = '';
+      document.getElementById('b_url').value = '';
+      document.getElementById('b_phone').value = '';
+      document.getElementById('b_address').value = '';
+      document.getElementById('b_area').value = 'กรุงเทพฯ';
+      document.getElementById('b_status').value = 'active';
+    }
+
+    hideBranchError();
+    document.getElementById('branchModal').classList.add('show');
+  }
+
+  function closeBranchModal() { document.getElementById('branchModal').classList.remove('show'); }
+  function showBranchError(msg) {
+    document.getElementById('branchErrorText').textContent = msg;
+    document.getElementById('branchError').classList.add('show');
+  }
+  function hideBranchError() { document.getElementById('branchError').classList.remove('show'); }
+
+  async function saveBranch() {
+    hideBranchError();
+    const code = document.getElementById('b_code').value.trim().toUpperCase();
+    const name = document.getElementById('b_name').value.trim();
+    if (!code || !name) { showBranchError('กรุณากรอกรหัสสาขาและชื่อสาขา'); return; }
+
+    const btn = document.getElementById('branchSaveBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> กำลังบันทึก...';
+
+    const data = {
+      code, name,
+      area: document.getElementById('b_area').value,
+      url: document.getElementById('b_url').value.trim(),
+      phone: document.getElementById('b_phone').value.trim(),
+      address: document.getElementById('b_address').value.trim(),
+      status: document.getElementById('b_status').value,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      updatedBy: currentUserData.email
+    };
+
+    try {
+      if (editingBranchId) {
+        await db.collection('branches').doc(editingBranchId).update(data);
+        await logActivity('update_branch', { id: editingBranchId, code, name });
+      } else {
+        data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+        data.createdBy = currentUserData.email;
+        await db.collection('branches').add(data);
+        await logActivity('create_branch', { code, name });
+      }
+      closeBranchModal();
+      await loadBranches();
+      alert('✅ บันทึกสำเร็จ!');
+    } catch(e) {
+      showBranchError(e.message);
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '💾 บันทึก';
+    }
+  }
+
+  async function toggleBranchStatus(id) {
+    const b = allBranches.find(x => x.id === id);
+    if (!b) return;
+    const newStatus = b.status === 'active' ? 'inactive' : 'active';
+    if (!confirm(`${newStatus==='active'?'เปิด':'ปิด'}สาขา "${b.name}"?`)) return;
+    await db.collection('branches').doc(id).update({
+      status: newStatus,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    await logActivity('toggle_branch', { id, name: b.name, status: newStatus });
+    await loadBranches();
+  }
+
+  async function deleteBranch(id, name) {
+    if (!confirm(`⚠️ ลบสาขา "${name}"?\n\nสาขานี้จะหายไปจากหน้าแรกด้วย`)) return;
+    await db.collection('branches').doc(id).delete();
+    await logActivity('delete_branch', { id, name });
+    await loadBranches();
+    alert('✅ ลบสำเร็จ');
+  }
+
+  async function handleLogout() {
+    if (confirm('ออกจากระบบ?')) await logout();
+  }
+
+  // Close on background click
+  ['sysModal','branchModal'].forEach(id => {
+    document.getElementById(id).addEventListener('click', e => {
+      if (e.target.id === id) {
+        if (id === 'sysModal') closeSysModal();
+        else closeBranchModal();
+      }
+    });
+  });
+</script>
+</body>
+</html>
