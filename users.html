@@ -111,7 +111,7 @@
   .field input:focus,.field select:focus{border-color:var(--green-mid);box-shadow:0 0 0 3px rgba(26,122,94,.1)}
   .field-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 
-  .role-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:4px}
+  .role-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:4px}
   .role-opt{padding:14px;border:2px solid var(--line);border-radius:12px;cursor:pointer;transition:all .15s;text-align:center}
   .role-opt:hover{border-color:var(--green-mid)}
   .role-opt.selected{border-color:var(--green-deep);background:var(--green-soft)}
@@ -245,9 +245,11 @@
           <input type="text" class="card-search" id="searchInput" placeholder="🔍 ค้นหาชื่อ/อีเมล..." oninput="renderTable()">
           <select class="card-search" id="filterRole" style="width:auto" onchange="renderTable()">
             <option value="">ทุก Role</option>
-            <option value="super_admin">Super Admin</option>
-            <option value="manager">Manager</option>
-            <option value="staff">Staff</option>
+            <option value="admin">Admin</option>
+            <option value="manager">ผู้จัดการ</option>
+            <option value="hq_staff">พนักงาน HQ</option>
+            <option value="branch_staff">พนักงานสาขา</option>
+            <option value="clinic">คลีนิก</option>
             <option value="viewer">Viewer</option>
           </select>
           <select class="card-search" id="filterStatus" style="width:auto" onchange="renderTable()">
@@ -313,14 +315,20 @@
       <div class="field">
         <label>สิทธิ์ (Role) <span class="req">*</span></label>
         <div class="role-grid">
-          <div class="role-opt" data-role="super_admin" onclick="pickRole('super_admin')">
-            <div class="emoji">👑</div><div class="label">Super Admin</div><div class="desc">จัดการได้ทุกอย่าง</div>
+          <div class="role-opt" data-role="admin" onclick="pickRole('admin')">
+            <div class="emoji">👑</div><div class="label">Admin</div><div class="desc">จัดการได้ทุกอย่าง</div>
           </div>
           <div class="role-opt" data-role="manager" onclick="pickRole('manager')">
-            <div class="emoji">🎖️</div><div class="label">Manager</div><div class="desc">จัดการระบบ + สาขา</div>
+            <div class="emoji">🎖️</div><div class="label">ผู้จัดการ</div><div class="desc">จัดการ user + เห็นทุกสาขา</div>
           </div>
-          <div class="role-opt selected" data-role="staff" onclick="pickRole('staff')">
-            <div class="emoji">👤</div><div class="label">Staff</div><div class="desc">ใช้งานระบบทั่วไป</div>
+          <div class="role-opt" data-role="hq_staff" onclick="pickRole('hq_staff')">
+            <div class="emoji">🏢</div><div class="label">พนักงาน HQ</div><div class="desc">เห็นทุกสาขา ใช้งานระบบ</div>
+          </div>
+          <div class="role-opt selected" data-role="branch_staff" onclick="pickRole('branch_staff')">
+            <div class="emoji">🏪</div><div class="label">พนักงานสาขา</div><div class="desc">เห็นเฉพาะสาขาตัวเอง</div>
+          </div>
+          <div class="role-opt" data-role="clinic" onclick="pickRole('clinic')">
+            <div class="emoji">🏥</div><div class="label">คลีนิก</div><div class="desc">เห็นเฉพาะสาขาตัวเอง</div>
           </div>
           <div class="role-opt" data-role="viewer" onclick="pickRole('viewer')">
             <div class="emoji">👁️</div><div class="label">Viewer</div><div class="desc">ดูได้อย่างเดียว</div>
@@ -363,6 +371,13 @@
 
         <div class="expiry-preview" id="expiryPreview">
           📅 จะหมดอายุวันที่: <strong>--</strong>
+        </div>
+      </div>
+
+      <div class="field" id="allowedSystemsField">
+        <label>ระบบที่อนุญาต <span class="hint">(ไม่เลือก = ไม่เห็นเลย)</span></label>
+        <div id="systemsCheckboxes" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:8px;background:#f4f7f5;border-radius:10px;max-height:160px;overflow-y:auto">
+          <div style="color:var(--gray);font-size:13px;grid-column:1/-1">กำลังโหลดระบบ...</div>
         </div>
       </div>
 
@@ -459,6 +474,8 @@
     document.getElementById('userRole').textContent = ROLE_LABELS[userData.role];
     document.getElementById('userAvatar').textContent = userData.name.substring(0,2).toUpperCase();
 
+    // โหลดรายการระบบสำหรับ picker
+    await loadSystemsForPicker();
     await loadUsers();
     document.getElementById('loadingPage').style.display = 'none';
     document.getElementById('app').style.display = 'grid';
@@ -578,10 +595,12 @@
 
   function renderRolePill(role) {
     const map = {
-      super_admin: '<span class="pill pill-purple">👑 Super Admin</span>',
-      manager:     '<span class="pill pill-gold">🎖️ Manager</span>',
-      staff:       '<span class="pill pill-blue">👤 Staff</span>',
-      viewer:      '<span class="pill pill-gray">👁️ Viewer</span>'
+      admin:        '<span class="pill pill-purple">👑 Admin</span>',
+      manager:      '<span class="pill pill-gold">🎖️ ผู้จัดการ</span>',
+      hq_staff:     '<span class="pill pill-blue">🏢 พนักงาน HQ</span>',
+      branch_staff: '<span class="pill pill-green">🏪 พนักงานสาขา</span>',
+      clinic:       '<span class="pill pill-orange">🏥 คลีนิก</span>',
+      viewer:       '<span class="pill pill-gray">👁️ Viewer</span>'
     };
     return map[role] || `<span class="pill pill-gray">${role}</span>`;
   }
@@ -681,6 +700,7 @@
   // ========== MODAL ==========
   function openAddModal() {
     editingId = null;
+    selectedSystems = [];
     document.getElementById('modalTitle').textContent = '+ เพิ่มผู้ใช้ใหม่';
     document.getElementById('passwordField').style.display = 'block';
     document.getElementById('emailHint').textContent = '';
@@ -690,7 +710,7 @@
     document.getElementById('f_password').value = generatePassword();
     document.getElementById('f_branch').value = '';
     document.getElementById('f_active').value = 'true';
-    selectedRole = 'staff';
+    selectedRole = 'branch_staff';
     expiryMode = 'preset';
     selectedPreset = 'month';
     
@@ -723,6 +743,7 @@
     document.getElementById('f_branch').value = u.branch || '';
     document.getElementById('f_active').value = u.isActive ? 'true' : 'false';
     selectedRole = u.role;
+    selectedSystems = u.allowedSystems || [];
 
     // Detect expiry mode
     const t = u.membershipType || 'month';
@@ -744,6 +765,7 @@
     }
 
     pickRole(selectedRole);
+    showHideSystemsPicker(selectedRole);
     if (expiryMode === 'preset') pickPreset(selectedPreset);
     updateExpiryPreview();
     hideWarning();
@@ -758,6 +780,7 @@
     document.querySelectorAll('.role-opt').forEach(el => {
       el.classList.toggle('selected', el.dataset.role === role);
     });
+    showHideSystemsPicker(role);
   }
 
   function showWarning(msg) {
@@ -968,6 +991,57 @@
       await loadUsers();
       alert(`✅ ลบข้อมูลใน Firestore สำเร็จ\n\n💡 อย่าลืมไปลบ Auth ที่ Firebase Console`);
     } catch (err) { alert('❌ ' + err.message); }
+  }
+
+  // ===== ALLOWED SYSTEMS PICKER =====
+  let availableSystems = [];
+
+  async function loadSystemsForPicker() {
+    try {
+      const snap = await db.collection('systems').get();
+      availableSystems = snap.docs.map(d => ({id: d.id, ...d.data()}))
+        .filter(s => s.status === 'active' || !s.status);
+    } catch(e) {
+      availableSystems = [];
+    }
+  }
+
+  function renderSystemsCheckboxes(selectedIds = []) {
+    const container = document.getElementById('systemsCheckboxes');
+    
+    if (availableSystems.length === 0) {
+      container.innerHTML = '<div style="color:var(--gray);font-size:13px;grid-column:1/-1">⚠️ ยังไม่มีระบบงาน กรุณาเพิ่มระบบก่อน</div>';
+      return;
+    }
+
+    container.innerHTML = availableSystems.map(s => `
+      <label style="display:flex;align-items:center;gap:8px;padding:8px;background:white;border-radius:8px;cursor:pointer;border:1px solid var(--line);font-size:13px">
+        <input type="checkbox" value="${s.id}" 
+          ${selectedIds.includes(s.id) ? 'checked' : ''}
+          onchange="toggleSystem('${s.id}')"
+          style="accent-color:var(--green-mid);width:16px;height:16px">
+        <span style="width:28px;height:28px;background:${s.color||'#0d4f3c'};border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:14px">${s.icon||'💊'}</span>
+        <span>${s.name}</span>
+      </label>`).join('');
+  }
+
+  function toggleSystem(systemId) {
+    if (selectedSystems.includes(systemId)) {
+      selectedSystems = selectedSystems.filter(id => id !== systemId);
+    } else {
+      selectedSystems.push(systemId);
+    }
+  }
+
+  function showHideSystemsPicker(role) {
+    const field = document.getElementById('allowedSystemsField');
+    // admin และ manager เห็นทุกระบบ ไม่ต้องเลือก
+    if (['admin', 'manager'].includes(role)) {
+      field.style.display = 'none';
+    } else {
+      field.style.display = 'block';
+      renderSystemsCheckboxes(selectedSystems);
+    }
   }
 
   async function handleLogout() {

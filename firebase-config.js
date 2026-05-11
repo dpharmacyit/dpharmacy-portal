@@ -23,26 +23,42 @@ const db = firebase.firestore();
 // ============================================
 // ระบบสิทธิ์ 4 ระดับ
 // ============================================
+// ============================================
+// Role 6 ระดับ
+// ============================================
 const ROLES = {
-  SUPER_ADMIN: 'super_admin',
-  MANAGER:     'manager',
-  STAFF:       'staff',
-  VIEWER:      'viewer'
+  ADMIN:        'admin',
+  MANAGER:      'manager',
+  HQ_STAFF:     'hq_staff',
+  BRANCH_STAFF: 'branch_staff',
+  CLINIC:       'clinic',
+  VIEWER:       'viewer'
 };
 
 const ROLE_LABELS = {
-  super_admin: '👑 Super Admin',
-  manager:     '🎖️ Manager',
-  staff:       '👤 Staff',
-  viewer:      '👁️ Viewer'
+  admin:        '👑 Admin',
+  manager:      '🎖️ ผู้จัดการ',
+  hq_staff:     '🏢 พนักงาน HQ',
+  branch_staff: '🏪 พนักงานสาขา',
+  clinic:       '🏥 คลีนิก',
+  viewer:       '👁️ Viewer'
 };
 
+// สิทธิ์การจัดการระบบ
 const ROLE_PERMISSIONS = {
-  super_admin: ['view','create_user','edit_user','delete_user','manage_system','manage_branch','view_audit'],
-  manager:     ['view','create_user','edit_user','manage_system','manage_branch'],
-  staff:       ['view','use_system'],
-  viewer:      ['view']
+  admin:        ['view','create_user','edit_user','delete_user','manage_system','manage_branch','view_audit'],
+  manager:      ['view','create_user','edit_user','manage_system','manage_branch'],
+  hq_staff:     ['view','use_system'],
+  branch_staff: ['view','use_system'],
+  clinic:       ['view','use_system'],
+  viewer:       ['view']
 };
+
+// Role ที่เห็นทุกสาขา (ไม่จำกัดสาขา)
+const ALL_BRANCH_ROLES = ['admin', 'manager', 'hq_staff'];
+
+// Role ที่เป็น Admin (จัดการระบบได้)
+const ADMIN_ROLES = ['admin', 'manager'];
 
 // ============================================
 // Helper: ตรวจสิทธิ์
@@ -52,7 +68,34 @@ function hasPermission(userRole, permission) {
 }
 
 function isAdminRole(role) {
-  return ['super_admin', 'manager'].includes(role);
+  return ADMIN_ROLES.includes(role);
+}
+
+// เช็คว่าเห็นทุกสาขาได้ไหม
+function canSeeAllBranches(role) {
+  return ALL_BRANCH_ROLES.includes(role);
+}
+
+// กรองระบบตาม allowedSystems ของ user
+function filterSystemsByUser(systems, userData) {
+  // admin และ manager เห็นทุกระบบ
+  if (isAdminRole(userData.role)) return systems;
+  
+  // user อื่น เห็นเฉพาะระบบที่ได้รับอนุญาต
+  const allowed = userData.allowedSystems || [];
+  if (allowed.length === 0) return []; // ไม่ได้รับอนุญาตเลย
+  return systems.filter(s => allowed.includes(s.id));
+}
+
+// กรองสาขาตาม user
+function filterBranchesByUser(branches, userData) {
+  // admin, manager, hq_staff เห็นทุกสาขา
+  if (canSeeAllBranches(userData.role)) return branches;
+  
+  // คนอื่นเห็นแค่สาขาตัวเอง
+  const userBranch = userData.branch || '';
+  if (!userBranch) return [];
+  return branches.filter(b => b.code === userBranch || b.id === userBranch);
 }
 
 // ============================================

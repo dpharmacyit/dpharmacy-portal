@@ -130,8 +130,8 @@
 <div class="topbar">
   <div class="topbar-inner">
     <div class="topbar-left">
-      <span>📞 Hotline: 02-XXX-XXXX</span>
-      <span>📧 support@dpharmacy.co.th</span>
+      <span>📞 081-247-6814</span>
+      <span>📧 dpharmacyit@gmail.com</span>
     </div>
     <div class="topbar-right">
       <span class="clock" id="clock">--:--:--</span>
@@ -298,24 +298,21 @@
   // ===== LOAD DATA =====
   async function loadData() {
     try {
-      // ดึง systems ทั้งหมด แล้ว filter ใน JS แทน
       const [sysSnap, branchSnap] = await Promise.all([
         db.collection('systems').get(),
         db.collection('branches').get()
       ]);
 
-      console.log('Systems found:', sysSnap.size);
-      console.log('Branches found:', branchSnap.size);
-
       const systems = sysSnap.docs.map(d => ({id:d.id,...d.data()}));
       const branches = branchSnap.docs.map(d => ({id:d.id,...d.data()}));
 
-      // filter เฉพาะที่ active
-      allSystems = systems.filter(s => s.status === 'active' || !s.status);
-      allBranches = branches.filter(b => b.status === 'active' || !b.status);
+      // 1. filter เฉพาะที่ active
+      const activeSystems = systems.filter(s => s.status === 'active' || !s.status);
+      const activeBranches = branches.filter(b => b.status === 'active' || !b.status);
 
-      console.log('Active systems:', allSystems.length);
-      console.log('Active branches:', allBranches.length);
+      // 2. ซ่อนตาม permission ของ user (ไม่แสดงเลย ถ้าไม่มีสิทธิ์)
+      allSystems = filterSystemsByUser(activeSystems, currentUserData);
+      allBranches = filterBranchesByUser(activeBranches, currentUserData);
 
     } catch(e) {
       console.error('loadData error:', e);
