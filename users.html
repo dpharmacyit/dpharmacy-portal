@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>จัดการผู้ใช้งาน | Dpharmacy Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;800&display=swap" rel="stylesheet">
+
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+
+<style>
+  :root{
+    --green-deep:#0d4f3c;--green-mid:#1a7a5e;--green-soft:#e8f5ef;
+    --cream:#fdfcf7;--ink:#0f1f1a;--gray:#6b7d75;
+    --line:#e3ebe6;--accent:#ff6b4a;--gold:#d4a574;
+    --danger:#dc2626;--warn:#f59e0b;--info:#2563eb;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'IBM Plex Sans Thai','Outfit',sans-serif;background:#f4f7f5;color:var(--ink);min-height:100vh}
+  .app{display:grid;grid-template-columns:260px 1fr;min-height:100vh}
+
+  .sidebar{background:var(--ink);color:white;padding:24px 0;position:sticky;top:0;height:100vh;display:flex;flex-direction:column}
+  .sidebar-logo{padding:0 24px 24px;border-bottom:1px solid rgba(255,255,255,.1);display:flex;align-items:center;gap:12px}
+  .sidebar-logo .icon{width:40px;height:40px;background:linear-gradient(135deg,var(--green-mid),var(--green-deep));border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:20px}
+  .sidebar-logo h1{font-family:'Outfit',sans-serif;font-size:18px;font-weight:700}
+  .sidebar-logo p{font-size:11px;opacity:.5;letter-spacing:1.5px;text-transform:uppercase}
+  .nav-section{padding:24px 0;flex:1;overflow-y:auto}
+  .nav-label{padding:0 24px 8px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;opacity:.5}
+  .nav-item{display:flex;align-items:center;gap:12px;padding:12px 24px;color:white;text-decoration:none;font-size:14px;border-left:3px solid transparent;transition:all .15s;cursor:pointer}
+  .nav-item:hover{background:rgba(255,255,255,.05)}
+  .nav-item.active{background:rgba(26,122,94,.15);border-left-color:var(--green-mid);color:#a8e6cf}
+  .nav-item .ico{width:20px;text-align:center}
+  .nav-item .badge{margin-left:auto;background:var(--accent);color:white;font-size:10px;padding:2px 8px;border-radius:10px}
+  .sidebar-foot{padding:16px 24px;border-top:1px solid rgba(255,255,255,.1);display:flex;align-items:center;gap:12px}
+  .sidebar-foot .av{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--accent));display:flex;align-items:center;justify-content:center;font-weight:600;font-size:13px}
+  .sidebar-foot .info{flex:1;min-width:0}
+  .sidebar-foot .name{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .sidebar-foot .role{font-size:11px;opacity:.6}
+  .logout-btn{background:transparent;border:none;color:white;cursor:pointer;opacity:.5;font-size:18px;transition:opacity .15s}
+  .logout-btn:hover{opacity:1}
+
+  .main{padding:32px 40px}
+  .page-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:32px;flex-wrap:wrap;gap:16px}
+  .page-head h2{font-family:'Outfit',sans-serif;font-size:32px;font-weight:700;letter-spacing:-.5px}
+  .breadcrumb{font-size:13px;color:var(--gray);margin-bottom:8px}
+  .breadcrumb a{color:var(--green-mid);text-decoration:none}
+  .actions{display:flex;gap:10px;flex-wrap:wrap}
+  .btn{padding:10px 20px;border-radius:10px;border:none;cursor:pointer;font-family:inherit;font-size:14px;font-weight:500;display:inline-flex;align-items:center;gap:6px;transition:all .15s;white-space:nowrap}
+  .btn-primary{background:var(--green-deep);color:white}
+  .btn-primary:hover{background:var(--green-mid)}
+  .btn-ghost{background:white;border:1px solid var(--line);color:var(--ink)}
+  .btn-ghost:hover{border-color:var(--green-mid)}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:32px}
+  .stat-card{background:white;padding:20px;border-radius:16px;border:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
+  .stat-card .info .lbl{font-size:12px;color:var(--gray);letter-spacing:.5px}
+  .stat-card .info .val{font-family:'Outfit',sans-serif;font-size:32px;font-weight:700;margin-top:4px}
+  .stat-card .icn{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px}
+  .icn-1{background:var(--green-soft);color:var(--green-deep)}
+  .icn-2{background:#fff7ed;color:#ea580c}
+  .icn-4{background:#fef2f2;color:#dc2626}
+
+  .card{background:white;border:1px solid var(--line);border-radius:18px;overflow:hidden}
+  .card-head{padding:18px 24px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+  .card-head h3{font-size:16px;font-weight:600}
+  .card-tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .card-search{padding:8px 14px;border:1px solid var(--line);border-radius:8px;font-family:inherit;outline:none;font-size:13px;width:240px}
+
+  table{width:100%;border-collapse:collapse}
+  thead{background:#f9fbfa}
+  th{padding:12px 24px;text-align:left;font-size:12px;font-weight:600;color:var(--gray);letter-spacing:.5px;text-transform:uppercase;border-bottom:1px solid var(--line)}
+  td{padding:14px 24px;font-size:14px;border-bottom:1px solid #f1f4f2;vertical-align:middle}
+  tbody tr:hover{background:#f9fbfa}
+
+  .user-cell{display:flex;align-items:center;gap:12px}
+  .user-avatar{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--accent));display:flex;align-items:center;justify-content:center;color:white;font-weight:600;font-size:14px;flex-shrink:0}
+  .user-info .name{font-weight:600}
+  .user-info .email{font-size:12px;color:var(--gray)}
+
+  .pill{display:inline-flex;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600;letter-spacing:.5px;text-transform:uppercase}
+  .pill-green{background:var(--green-soft);color:var(--green-deep)}
+  .pill-orange{background:#fff7ed;color:#ea580c}
+  .pill-red{background:#fef2f2;color:var(--danger)}
+  .pill-blue{background:#eff6ff;color:#2563eb}
+  .pill-gold{background:#fef3c7;color:#92400e}
+  .pill-purple{background:#f3e8ff;color:#7c3aed}
+  .pill-gray{background:#f1f5f9;color:#475569}
+
+  .row-actions{display:flex;gap:6px}
+  .ic-btn{width:32px;height:32px;border-radius:8px;border:none;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--gray);transition:all .15s;font-size:16px}
+  .ic-btn:hover{background:var(--green-soft);color:var(--green-deep)}
+  .ic-btn.del:hover{background:#fef2f2;color:var(--danger)}
+
+  .modal-bg{position:fixed;inset:0;background:rgba(15,31,26,.5);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:200;padding:20px}
+  .modal-bg.show{display:flex}
+  .modal{background:white;border-radius:20px;width:100%;max-width:600px;max-height:90vh;overflow-y:auto}
+  .modal-head{padding:20px 24px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
+  .modal-head h3{font-size:18px;font-weight:600}
+  .modal-close{width:32px;height:32px;border-radius:8px;border:none;background:#f4f7f5;cursor:pointer;font-size:18px}
+  .modal-body{padding:24px}
+  .modal-foot{padding:16px 24px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:8px}
+
+  .field{margin-bottom:16px}
+  .field label{display:block;font-size:13px;font-weight:500;margin-bottom:6px}
+  .field label .req{color:var(--danger)}
+  .field label .hint{color:var(--gray);font-weight:400;font-size:12px}
+  .field input,.field select{width:100%;padding:11px 14px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;outline:none;transition:border-color .15s}
+  .field input:focus,.field select:focus{border-color:var(--green-mid);box-shadow:0 0 0 3px rgba(26,122,94,.1)}
+  .field-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+  .role-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:4px}
+  .role-opt{padding:14px;border:2px solid var(--line);border-radius:12px;cursor:pointer;transition:all .15s;text-align:center}
+  .role-opt:hover{border-color:var(--green-mid)}
+  .role-opt.selected{border-color:var(--green-deep);background:var(--green-soft)}
+  .role-opt .emoji{font-size:24px;margin-bottom:4px}
+  .role-opt .label{font-size:13px;font-weight:600}
+  .role-opt .desc{font-size:11px;color:var(--gray);margin-top:2px}
+
+  /* ========== EXPIRY TABS - NEW! ========== */
+  .expiry-tabs{display:flex;gap:4px;background:#f4f7f5;padding:4px;border-radius:12px;margin-bottom:12px}
+  .expiry-tab{flex:1;padding:8px;text-align:center;border:none;background:transparent;border-radius:8px;cursor:pointer;font-family:inherit;font-size:13px;color:var(--gray);font-weight:500}
+  .expiry-tab.active{background:white;color:var(--green-deep);box-shadow:0 1px 3px rgba(0,0,0,.06)}
+
+  .preset-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+  .preset-opt{padding:10px 6px;border:2px solid var(--line);border-radius:8px;cursor:pointer;text-align:center;transition:all .15s;font-size:12px}
+  .preset-opt:hover{border-color:var(--green-mid)}
+  .preset-opt.selected{border-color:var(--green-deep);background:var(--green-soft);color:var(--green-deep);font-weight:600}
+
+  .custom-wrap{display:grid;grid-template-columns:1fr 1.5fr;gap:8px;align-items:center}
+  .custom-wrap input{padding:11px 14px;border:1px solid var(--line);border-radius:10px;font-size:14px;text-align:center;font-weight:600}
+  .custom-wrap select{padding:11px 14px;border:1px solid var(--line);border-radius:10px;font-size:14px;font-family:inherit;background:white}
+
+  .expiry-preview{font-size:13px;color:var(--green-deep);margin-top:10px;padding:10px 14px;background:var(--green-soft);border-radius:10px;font-weight:500}
+
+  .alert{padding:12px 16px;border-radius:10px;font-size:13px;margin-bottom:16px;display:flex;align-items:center;gap:10px}
+  .alert-warn{background:#fef9c3;border-left:3px solid #ca8a04;color:#713f12}
+  .alert-info{background:#eff6ff;border-left:3px solid var(--info);color:#1e40af}
+  .alert-error{background:#fef2f2;border-left:3px solid var(--danger);color:#7f1d1d}
+
+  .empty{padding:60px 24px;text-align:center;color:var(--gray)}
+  .empty .ic{font-size:48px;margin-bottom:12px}
+
+  .spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:white;border-radius:50%;animation:spin 0.8s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  .loading-page{display:flex;align-items:center;justify-content:center;min-height:100vh;flex-direction:column;gap:16px;color:var(--gray)}
+
+  @media(max-width:900px){
+    .app{grid-template-columns:1fr}
+    .sidebar{display:none}
+    .stats{grid-template-columns:repeat(2,1fr)}
+    .main{padding:20px}
+    .field-grid{grid-template-columns:1fr}
+    .role-grid{grid-template-columns:1fr}
+    .preset-grid{grid-template-columns:repeat(3,1fr)}
+  }
+</style>
+</head>
+<body>
+
+<div id="loadingPage" class="loading-page">
+  <div style="font-size:48px">💊</div>
+  <div>กำลังโหลด...</div>
+</div>
+
+<div class="app" id="app" style="display:none">
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="icon">D</div>
+      <div><h1>Dpharmacy</h1><p>Admin Panel</p></div>
+    </div>
+    <nav class="nav-section">
+      <div class="nav-label">หลัก</div>
+      <a class="nav-item" href="index.html"><span class="ico">🏠</span> หน้าแรก</a>
+      <a class="nav-item" href="admin.html"><span class="ico">💊</span> จัดการระบบ</a>
+      <a class="nav-item active"><span class="ico">👥</span> จัดการผู้ใช้
+        <span class="badge" id="userBadge">0</span>
+      </a>
+      <a class="nav-item"><span class="ico">🏪</span> จัดการสาขา</a>
+      <div class="nav-label" style="margin-top:24px">ระบบ</div>
+      <a class="nav-item"><span class="ico">📜</span> Audit Log</a>
+      <a class="nav-item"><span class="ico">⚙️</span> ตั้งค่า</a>
+    </nav>
+    <div class="sidebar-foot">
+      <div class="av" id="userAvatar">--</div>
+      <div class="info">
+        <div class="name" id="userName">Loading...</div>
+        <div class="role" id="userRole">--</div>
+      </div>
+      <button class="logout-btn" onclick="handleLogout()" title="ออกจากระบบ">⏻</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="page-head">
+      <div>
+        <div class="breadcrumb"><a href="index.html">หน้าแรก</a> / Admin / จัดการผู้ใช้</div>
+        <h2>จัดการผู้ใช้งาน 👥</h2>
+      </div>
+      <div class="actions">
+        <button class="btn btn-ghost" onclick="loadUsers()">🔄 รีเฟรช</button>
+        <button class="btn btn-primary" onclick="openAddModal()">+ เพิ่มผู้ใช้ใหม่</button>
+      </div>
+    </div>
+
+    <div class="alert alert-info">
+      💡 <div><strong>หมายเหตุ:</strong> เมื่อสร้างผู้ใช้ใหม่ ระบบจะออกจากระบบของคุณโดยอัตโนมัติ (ข้อจำกัดของ Firebase) คุณต้อง login ใหม่หลังสร้าง user เสร็จ</div>
+    </div>
+
+    <div class="stats">
+      <div class="stat-card">
+        <div class="info"><div class="lbl">ผู้ใช้ทั้งหมด</div><div class="val" id="statTotal">0</div></div>
+        <div class="icn icn-1">👥</div>
+      </div>
+      <div class="stat-card">
+        <div class="info"><div class="lbl">เปิดใช้งาน</div><div class="val" id="statActive">0</div></div>
+        <div class="icn icn-1">✅</div>
+      </div>
+      <div class="stat-card">
+        <div class="info"><div class="lbl">ใกล้หมดอายุ</div><div class="val" id="statExpiring">0</div></div>
+        <div class="icn icn-2">⏰</div>
+      </div>
+      <div class="stat-card">
+        <div class="info"><div class="lbl">หมดอายุ/ระงับ</div><div class="val" id="statInactive">0</div></div>
+        <div class="icn icn-4">🚫</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h3>รายการผู้ใช้งาน</h3>
+        <div class="card-tools">
+          <input type="text" class="card-search" id="searchInput" placeholder="🔍 ค้นหาชื่อ/อีเมล..." oninput="renderTable()">
+          <select class="card-search" id="filterRole" style="width:auto" onchange="renderTable()">
+            <option value="">ทุก Role</option>
+            <option value="super_admin">Super Admin</option>
+            <option value="manager">Manager</option>
+            <option value="staff">Staff</option>
+            <option value="viewer">Viewer</option>
+          </select>
+          <select class="card-search" id="filterStatus" style="width:auto" onchange="renderTable()">
+            <option value="">ทุกสถานะ</option>
+            <option value="active">เปิดใช้งาน</option>
+            <option value="inactive">ปิดใช้งาน</option>
+            <option value="expired">หมดอายุ</option>
+            <option value="expiring">ใกล้หมดอายุ</option>
+          </select>
+        </div>
+      </div>
+      <div id="tableContainer">
+        <table>
+          <thead>
+            <tr>
+              <th>ผู้ใช้</th><th>Role</th><th>สาขา</th>
+              <th>วันหมดอายุ</th><th>สถานะ</th><th>เข้าระบบล่าสุด</th><th></th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- ADD/EDIT USER MODAL -->
+<div class="modal-bg" id="modal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="modalTitle">+ เพิ่มผู้ใช้ใหม่</h3>
+      <button class="modal-close" onclick="closeModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="alert alert-warn" id="modalWarning" style="display:none">
+        ⚠️ <div id="modalWarningText"></div>
+      </div>
+      <div class="alert alert-error" id="modalError" style="display:none">
+        ❌ <div id="modalErrorText"></div>
+      </div>
+
+      <div class="field-grid">
+        <div class="field">
+          <label>ชื่อ-นามสกุล <span class="req">*</span></label>
+          <input type="text" id="f_name" placeholder="เช่น สมชาย ใจดี">
+        </div>
+        <div class="field">
+          <label>สาขา</label>
+          <input type="text" id="f_branch" placeholder="เช่น HQ, BKK001">
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Email <span class="req">*</span> <span class="hint" id="emailHint"></span></label>
+        <input type="email" id="f_email" placeholder="user@dpharmacy.com">
+      </div>
+
+      <div class="field" id="passwordField">
+        <label>Password <span class="req">*</span> <span class="hint">(อย่างน้อย 6 ตัวอักษร)</span></label>
+        <input type="text" id="f_password" placeholder="ตั้งรหัสเริ่มต้นให้ user">
+      </div>
+
+      <div class="field">
+        <label>สิทธิ์ (Role) <span class="req">*</span></label>
+        <div class="role-grid">
+          <div class="role-opt" data-role="super_admin" onclick="pickRole('super_admin')">
+            <div class="emoji">👑</div><div class="label">Super Admin</div><div class="desc">จัดการได้ทุกอย่าง</div>
+          </div>
+          <div class="role-opt" data-role="manager" onclick="pickRole('manager')">
+            <div class="emoji">🎖️</div><div class="label">Manager</div><div class="desc">จัดการระบบ + สาขา</div>
+          </div>
+          <div class="role-opt selected" data-role="staff" onclick="pickRole('staff')">
+            <div class="emoji">👤</div><div class="label">Staff</div><div class="desc">ใช้งานระบบทั่วไป</div>
+          </div>
+          <div class="role-opt" data-role="viewer" onclick="pickRole('viewer')">
+            <div class="emoji">👁️</div><div class="label">Viewer</div><div class="desc">ดูได้อย่างเดียว</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ⭐ NEW: Expiry with Tabs (Preset / Custom) -->
+      <div class="field">
+        <label>อายุการใช้งาน <span class="req">*</span></label>
+        
+        <div class="expiry-tabs">
+          <button type="button" class="expiry-tab active" onclick="switchExpiryTab('preset',this)">⚡ ตัวเลือกด่วน</button>
+          <button type="button" class="expiry-tab" onclick="switchExpiryTab('custom',this)">🎯 กำหนดเอง</button>
+        </div>
+
+        <!-- Preset -->
+        <div id="presetPanel">
+          <div class="preset-grid">
+            <div class="preset-opt" data-exp="day" onclick="pickPreset('day')">📅<br>1 วัน</div>
+            <div class="preset-opt" data-exp="week" onclick="pickPreset('week')">📆<br>1 สัปดาห์</div>
+            <div class="preset-opt selected" data-exp="month" onclick="pickPreset('month')">🗓️<br>1 เดือน</div>
+            <div class="preset-opt" data-exp="year" onclick="pickPreset('year')">📊<br>1 ปี</div>
+            <div class="preset-opt" data-exp="permanent" onclick="pickPreset('permanent')">♾️<br>ถาวร</div>
+          </div>
+        </div>
+
+        <!-- Custom -->
+        <div id="customPanel" style="display:none">
+          <div class="custom-wrap">
+            <input type="number" id="customValue" min="1" max="999" value="15" oninput="updateExpiryPreview()">
+            <select id="customUnit" onchange="updateExpiryPreview()">
+              <option value="custom_days">วัน 📅</option>
+              <option value="custom_weeks">สัปดาห์ 📆</option>
+              <option value="custom_months">เดือน 🗓️</option>
+              <option value="custom_years">ปี 📊</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="expiry-preview" id="expiryPreview">
+          📅 จะหมดอายุวันที่: <strong>--</strong>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>สถานะ</label>
+        <select id="f_active">
+          <option value="true">✅ เปิดใช้งาน</option>
+          <option value="false">🚫 ระงับ</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>
+      <button class="btn btn-primary" id="saveBtn" onclick="saveUser()">💾 บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<!-- EXTEND MODAL -->
+<div class="modal-bg" id="extendModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>⏰ ต่ออายุ User</h3>
+      <button class="modal-close" onclick="closeExtendModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div id="extendInfo" style="margin-bottom:16px"></div>
+      
+      <div class="field">
+        <label>ต่ออายุไปอีก:</label>
+        
+        <div class="expiry-tabs">
+          <button type="button" class="expiry-tab active" onclick="switchExtendTab('preset',this)">⚡ ตัวเลือกด่วน</button>
+          <button type="button" class="expiry-tab" onclick="switchExtendTab('custom',this)">🎯 กำหนดเอง</button>
+        </div>
+
+        <div id="extendPresetPanel">
+          <div class="preset-grid">
+            <div class="preset-opt" data-ext="day" onclick="pickExtPreset('day')">📅<br>1 วัน</div>
+            <div class="preset-opt" data-ext="week" onclick="pickExtPreset('week')">📆<br>1 สัปดาห์</div>
+            <div class="preset-opt selected" data-ext="month" onclick="pickExtPreset('month')">🗓️<br>1 เดือน</div>
+            <div class="preset-opt" data-ext="year" onclick="pickExtPreset('year')">📊<br>1 ปี</div>
+            <div class="preset-opt" data-ext="permanent" onclick="pickExtPreset('permanent')">♾️<br>ถาวร</div>
+          </div>
+        </div>
+
+        <div id="extendCustomPanel" style="display:none">
+          <div class="custom-wrap">
+            <input type="number" id="extCustomValue" min="1" max="999" value="15" oninput="updateExtendPreview()">
+            <select id="extCustomUnit" onchange="updateExtendPreview()">
+              <option value="custom_days">วัน 📅</option>
+              <option value="custom_weeks">สัปดาห์ 📆</option>
+              <option value="custom_months">เดือน 🗓️</option>
+              <option value="custom_years">ปี 📊</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="expiry-preview" id="extendPreview">
+          📅 วันหมดอายุใหม่: <strong>--</strong>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeExtendModal()">ยกเลิก</button>
+      <button class="btn btn-primary" onclick="confirmExtend()">⏰ ต่ออายุ</button>
+    </div>
+  </div>
+</div>
+
+<script src="firebase-config.js"></script>
+
+<script>
+  // STATE
+  let allUsers = [];
+  let currentUser = null;
+  let editingId = null;
+  let selectedRole = 'staff';
+
+  // Expiry state
+  let expiryMode = 'preset';      // 'preset' or 'custom'
+  let selectedPreset = 'month';
+
+  // Extend state
+  let extendingUserId = null;
+  let extendMode = 'preset';
+  let selectedExtPreset = 'month';
+
+  // ========== AUTH GUARD ==========
+  requireAdmin(async (userData) => {
+    currentUser = userData;
+    
+    document.getElementById('userName').textContent = userData.name;
+    document.getElementById('userRole').textContent = ROLE_LABELS[userData.role];
+    document.getElementById('userAvatar').textContent = userData.name.substring(0,2).toUpperCase();
+
+    await loadUsers();
+    document.getElementById('loadingPage').style.display = 'none';
+    document.getElementById('app').style.display = 'grid';
+  });
+
+  // ========== LOAD USERS ==========
+  async function loadUsers() {
+    try {
+      const snapshot = await db.collection('users').orderBy('createdAt','desc').get();
+      allUsers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      updateStats();
+      renderTable();
+      document.getElementById('userBadge').textContent = allUsers.length;
+    } catch (err) {
+      console.error('Load failed:', err);
+      alert('โหลดข้อมูลไม่สำเร็จ: ' + err.message);
+    }
+  }
+
+  // ========== STATS ==========
+  function updateStats() {
+    const now = new Date();
+    let active = 0, expiring = 0, inactive = 0;
+    allUsers.forEach(u => {
+      if (!u.isActive) { inactive++; return; }
+      if (u.expiresAt) {
+        const exp = u.expiresAt.toDate ? u.expiresAt.toDate() : new Date(u.expiresAt);
+        const days = Math.ceil((exp - now)/(1000*60*60*24));
+        if (days <= 0) { inactive++; return; }
+        if (days <= 7) expiring++;
+      }
+      active++;
+    });
+    document.getElementById('statTotal').textContent = allUsers.length;
+    document.getElementById('statActive').textContent = active;
+    document.getElementById('statExpiring').textContent = expiring;
+    document.getElementById('statInactive').textContent = inactive;
+  }
+
+  // ========== RENDER TABLE ==========
+  function renderTable() {
+    const search = document.getElementById('searchInput').value.toLowerCase();
+    const filterRole = document.getElementById('filterRole').value;
+    const filterStatus = document.getElementById('filterStatus').value;
+    const now = new Date();
+
+    let filtered = allUsers.filter(u => {
+      if (search && !u.name?.toLowerCase().includes(search) && !u.email?.toLowerCase().includes(search)) return false;
+      if (filterRole && u.role !== filterRole) return false;
+      if (filterStatus) {
+        const status = getUserStatus(u, now);
+        if (status !== filterStatus) return false;
+      }
+      return true;
+    });
+
+    const tbody = document.getElementById('tbody');
+    if (filtered.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="7"><div class="empty"><div class="ic">🔍</div><div>ไม่พบข้อมูลที่ตรงกับเงื่อนไข</div></div></td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = filtered.map(u => {
+      const status = getUserStatus(u, now);
+      const initials = (u.name || u.email || '?').substring(0,2).toUpperCase();
+      return `
+        <tr>
+          <td>
+            <div class="user-cell">
+              <div class="user-avatar">${initials}</div>
+              <div class="user-info">
+                <div class="name">${u.name || '(ไม่มีชื่อ)'}</div>
+                <div class="email">${u.email}</div>
+              </div>
+            </div>
+          </td>
+          <td>${renderRolePill(u.role)}</td>
+          <td>${u.branch || '-'}</td>
+          <td>${renderExpiryText(u.expiresAt, now)}</td>
+          <td>${renderStatusPill(status, u, now)}</td>
+          <td style="color:var(--gray);font-size:12px">${u.lastLogin ? formatDate(u.lastLogin) : '-'}</td>
+          <td>
+            <div class="row-actions">
+              <button class="ic-btn" onclick="openEditModal('${u.id}')" title="แก้ไข">✏️</button>
+              <button class="ic-btn" onclick="openExtendModal('${u.id}')" title="ต่ออายุ">⏰</button>
+              <button class="ic-btn" onclick="resetPassword('${u.email}')" title="รีเซ็ตรหัส">🔑</button>
+              <button class="ic-btn" onclick="toggleActive('${u.id}')" title="${u.isActive?'ระงับ':'เปิดใช้'}">${u.isActive?'🔒':'🔓'}</button>
+              <button class="ic-btn del" onclick="deleteUser('${u.id}','${u.email}')" title="ลบ">🗑️</button>
+            </div>
+          </td>
+        </tr>`;
+    }).join('');
+  }
+
+  function getUserStatus(u, now) {
+    if (!u.isActive) return 'inactive';
+    if (u.expiresAt) {
+      const exp = u.expiresAt.toDate ? u.expiresAt.toDate() : new Date(u.expiresAt);
+      const days = Math.ceil((exp - now)/(1000*60*60*24));
+      if (days <= 0) return 'expired';
+      if (days <= 7) return 'expiring';
+    }
+    return 'active';
+  }
+
+  function renderStatusPill(status, u, now) {
+    if (status === 'active')   return '<span class="pill pill-green">✓ ใช้งานได้</span>';
+    if (status === 'expiring') {
+      const exp = u.expiresAt.toDate ? u.expiresAt.toDate() : new Date(u.expiresAt);
+      const days = Math.ceil((exp - now)/(1000*60*60*24));
+      return `<span class="pill pill-orange">⏰ เหลือ ${days} วัน</span>`;
+    }
+    if (status === 'expired')  return '<span class="pill pill-red">✕ หมดอายุ</span>';
+    if (status === 'inactive') return '<span class="pill pill-gray">🚫 ระงับ</span>';
+    return '-';
+  }
+
+  function renderRolePill(role) {
+    const map = {
+      super_admin: '<span class="pill pill-purple">👑 Super Admin</span>',
+      manager:     '<span class="pill pill-gold">🎖️ Manager</span>',
+      staff:       '<span class="pill pill-blue">👤 Staff</span>',
+      viewer:      '<span class="pill pill-gray">👁️ Viewer</span>'
+    };
+    return map[role] || `<span class="pill pill-gray">${role}</span>`;
+  }
+
+  function renderExpiryText(expiresAt, now) {
+    if (!expiresAt) return '<span style="color:var(--green-mid);font-weight:500">♾️ ถาวร</span>';
+    return formatDate(expiresAt);
+  }
+
+  function formatDate(d) {
+    const date = d.toDate ? d.toDate() : new Date(d);
+    return date.toLocaleDateString('th-TH',{year:'numeric',month:'short',day:'numeric'});
+  }
+
+  // ========== EXPIRY: TAB SWITCHING ==========
+  function switchExpiryTab(mode, btnEl) {
+    expiryMode = mode;
+    document.querySelectorAll('#modal .expiry-tab').forEach(t => t.classList.remove('active'));
+    btnEl.classList.add('active');
+    document.getElementById('presetPanel').style.display = mode === 'preset' ? 'block' : 'none';
+    document.getElementById('customPanel').style.display = mode === 'custom' ? 'block' : 'none';
+    updateExpiryPreview();
+  }
+
+  function pickPreset(p) {
+    selectedPreset = p;
+    document.querySelectorAll('.preset-opt[data-exp]').forEach(el => {
+      el.classList.toggle('selected', el.dataset.exp === p);
+    });
+    updateExpiryPreview();
+  }
+
+  function updateExpiryPreview() {
+    const preview = document.getElementById('expiryPreview');
+    let date;
+
+    if (expiryMode === 'preset') {
+      date = calculateExpiryDate(selectedPreset);
+    } else {
+      const value = parseInt(document.getElementById('customValue').value);
+      const unit = document.getElementById('customUnit').value;
+      if (isNaN(value) || value <= 0) {
+        preview.innerHTML = '⚠️ กรุณาใส่ตัวเลขที่ถูกต้อง';
+        return;
+      }
+      date = calculateExpiryDate(unit, value);
+    }
+
+    if (!date) {
+      preview.innerHTML = '♾️ ใช้งานได้ตลอดชีพ ไม่มีวันหมดอายุ';
+    } else {
+      preview.innerHTML = `📅 จะหมดอายุวันที่: <strong>${date.toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'})}</strong>`;
+    }
+  }
+
+  // ========== EXTEND: TAB SWITCHING ==========
+  function switchExtendTab(mode, btnEl) {
+    extendMode = mode;
+    document.querySelectorAll('#extendModal .expiry-tab').forEach(t => t.classList.remove('active'));
+    btnEl.classList.add('active');
+    document.getElementById('extendPresetPanel').style.display = mode === 'preset' ? 'block' : 'none';
+    document.getElementById('extendCustomPanel').style.display = mode === 'custom' ? 'block' : 'none';
+    updateExtendPreview();
+  }
+
+  function pickExtPreset(p) {
+    selectedExtPreset = p;
+    document.querySelectorAll('.preset-opt[data-ext]').forEach(el => {
+      el.classList.toggle('selected', el.dataset.ext === p);
+    });
+    updateExtendPreview();
+  }
+
+  function updateExtendPreview() {
+    const preview = document.getElementById('extendPreview');
+    let date;
+
+    if (extendMode === 'preset') {
+      date = calculateExpiryDate(selectedExtPreset);
+    } else {
+      const value = parseInt(document.getElementById('extCustomValue').value);
+      const unit = document.getElementById('extCustomUnit').value;
+      if (isNaN(value) || value <= 0) {
+        preview.innerHTML = '⚠️ กรุณาใส่ตัวเลขที่ถูกต้อง';
+        return;
+      }
+      date = calculateExpiryDate(unit, value);
+    }
+
+    if (!date) {
+      preview.innerHTML = '♾️ จะเปลี่ยนเป็นใช้งานได้ตลอดชีพ';
+    } else {
+      preview.innerHTML = `📅 วันหมดอายุใหม่: <strong>${date.toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'})}</strong>`;
+    }
+  }
+
+  // ========== MODAL ==========
+  function openAddModal() {
+    editingId = null;
+    document.getElementById('modalTitle').textContent = '+ เพิ่มผู้ใช้ใหม่';
+    document.getElementById('passwordField').style.display = 'block';
+    document.getElementById('emailHint').textContent = '';
+    document.getElementById('f_email').readOnly = false;
+    document.getElementById('f_name').value = '';
+    document.getElementById('f_email').value = '';
+    document.getElementById('f_password').value = generatePassword();
+    document.getElementById('f_branch').value = '';
+    document.getElementById('f_active').value = 'true';
+    selectedRole = 'staff';
+    expiryMode = 'preset';
+    selectedPreset = 'month';
+    
+    // Reset tabs
+    document.querySelectorAll('#modal .expiry-tab')[0].classList.add('active');
+    document.querySelectorAll('#modal .expiry-tab')[1].classList.remove('active');
+    document.getElementById('presetPanel').style.display = 'block';
+    document.getElementById('customPanel').style.display = 'none';
+    document.getElementById('customValue').value = 15;
+    document.getElementById('customUnit').value = 'custom_days';
+
+    pickRole('staff');
+    pickPreset('month');
+    showWarning('เมื่อสร้างผู้ใช้ ระบบจะ logout คุณออก จากนั้นต้อง login ใหม่');
+    hideModalError();
+    document.getElementById('modal').classList.add('show');
+  }
+
+  function openEditModal(userId) {
+    const u = allUsers.find(x => x.id === userId);
+    if (!u) return;
+
+    editingId = userId;
+    document.getElementById('modalTitle').textContent = '✏️ แก้ไข: ' + (u.name || u.email);
+    document.getElementById('passwordField').style.display = 'none';
+    document.getElementById('emailHint').textContent = '(แก้ไม่ได้)';
+    document.getElementById('f_email').readOnly = true;
+    document.getElementById('f_name').value = u.name || '';
+    document.getElementById('f_email').value = u.email;
+    document.getElementById('f_branch').value = u.branch || '';
+    document.getElementById('f_active').value = u.isActive ? 'true' : 'false';
+    selectedRole = u.role;
+
+    // Detect expiry mode
+    const t = u.membershipType || 'month';
+    if (t.startsWith('custom_')) {
+      expiryMode = 'custom';
+      document.querySelectorAll('#modal .expiry-tab')[0].classList.remove('active');
+      document.querySelectorAll('#modal .expiry-tab')[1].classList.add('active');
+      document.getElementById('presetPanel').style.display = 'none';
+      document.getElementById('customPanel').style.display = 'block';
+      document.getElementById('customValue').value = u.customValue || 15;
+      document.getElementById('customUnit').value = t;
+    } else {
+      expiryMode = 'preset';
+      selectedPreset = t;
+      document.querySelectorAll('#modal .expiry-tab')[0].classList.add('active');
+      document.querySelectorAll('#modal .expiry-tab')[1].classList.remove('active');
+      document.getElementById('presetPanel').style.display = 'block';
+      document.getElementById('customPanel').style.display = 'none';
+    }
+
+    pickRole(selectedRole);
+    if (expiryMode === 'preset') pickPreset(selectedPreset);
+    updateExpiryPreview();
+    hideWarning();
+    hideModalError();
+    document.getElementById('modal').classList.add('show');
+  }
+
+  function closeModal() { document.getElementById('modal').classList.remove('show'); }
+
+  function pickRole(role) {
+    selectedRole = role;
+    document.querySelectorAll('.role-opt').forEach(el => {
+      el.classList.toggle('selected', el.dataset.role === role);
+    });
+  }
+
+  function showWarning(msg) {
+    document.getElementById('modalWarningText').textContent = msg;
+    document.getElementById('modalWarning').style.display = 'flex';
+  }
+  function hideWarning() { document.getElementById('modalWarning').style.display = 'none'; }
+  function showModalError(msg) {
+    document.getElementById('modalErrorText').textContent = msg;
+    document.getElementById('modalError').style.display = 'flex';
+  }
+  function hideModalError() { document.getElementById('modalError').style.display = 'none'; }
+
+  function generatePassword() {
+    const chars = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
+    let pwd = '';
+    for (let i = 0; i < 10; i++) pwd += chars[Math.floor(Math.random() * chars.length)];
+    return pwd;
+  }
+
+  // ========== SAVE USER ==========
+  async function saveUser() {
+    hideModalError();
+    const name = document.getElementById('f_name').value.trim();
+    const email = document.getElementById('f_email').value.trim();
+    const password = document.getElementById('f_password').value;
+    const branch = document.getElementById('f_branch').value.trim();
+    const isActive = document.getElementById('f_active').value === 'true';
+
+    if (!name || !email) {
+      showModalError('กรุณากรอกชื่อและอีเมล');
+      return;
+    }
+    if (!editingId && password.length < 6) {
+      showModalError('Password ต้องอย่างน้อย 6 ตัวอักษร');
+      return;
+    }
+
+    // Calculate expiry
+    let membershipType, expiresAt, customValue = null;
+    if (expiryMode === 'preset') {
+      membershipType = selectedPreset;
+      expiresAt = calculateExpiryDate(membershipType);
+    } else {
+      customValue = parseInt(document.getElementById('customValue').value);
+      const unit = document.getElementById('customUnit').value;
+      if (isNaN(customValue) || customValue <= 0) {
+        showModalError('กรุณาใส่ตัวเลขอายุการใช้งานที่ถูกต้อง');
+        return;
+      }
+      membershipType = unit;
+      expiresAt = calculateExpiryDate(unit, customValue);
+    }
+
+    const saveBtn = document.getElementById('saveBtn');
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<span class="spinner"></span> กำลังบันทึก...';
+
+    try {
+      const userData = {
+        name, branch, role: selectedRole, isActive,
+        membershipType, expiresAt, customValue
+      };
+
+      if (editingId) {
+        userData.updatedAt = firebase.firestore.FieldValue.serverTimestamp();
+        userData.updatedBy = currentUser.email;
+        await db.collection('users').doc(editingId).update(userData);
+        await logActivity('update_user', { userId: editingId, email });
+        alert('✅ อัปเดตข้อมูลสำเร็จ!');
+        closeModal();
+        await loadUsers();
+      } else {
+        // ✅ ใช้ Secondary App สร้าง user ใหม่โดยไม่ logout admin ออก
+        const secondaryApp = firebase.initializeApp(firebaseConfig, 'Secondary_' + Date.now());
+        const secondaryAuth = secondaryApp.auth();
+
+        const cred = await secondaryAuth.createUserWithEmailAndPassword(email, password);
+        const newUid = cred.user.uid;
+
+        // Sign out secondary ทันที ไม่กระทบ admin session
+        await secondaryAuth.signOut();
+        await secondaryApp.delete();
+
+        // บันทึกข้อมูลใน Firestore
+        userData.email = email;
+        userData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+        userData.createdBy = currentUser.email;
+        await db.collection('users').doc(newUid).set(userData);
+        await logActivity('create_user', { newUid, email, role: selectedRole });
+
+        alert(`✅ สร้างผู้ใช้สำเร็จ!\n\nEmail: ${email}\nPassword: ${password}\n\n📋 แจ้ง user ให้เก็บรหัสผ่านนี้ไว้`);
+        closeModal();
+        await loadUsers();
+      }
+    } catch (err) {
+      saveBtn.disabled = false;
+      saveBtn.innerHTML = '💾 บันทึก';
+      let msg = err.message;
+      if (err.code === 'auth/email-already-in-use') msg = 'Email นี้ถูกใช้ในระบบแล้ว';
+      else if (err.code === 'auth/invalid-email')   msg = 'รูปแบบ Email ไม่ถูกต้อง';
+      else if (err.code === 'auth/weak-password')   msg = 'Password อ่อนเกินไป (อย่างน้อย 6 ตัว)';
+      showModalError(msg);
+    }
+  }
+
+  // ========== EXTEND ==========
+  function openExtendModal(userId) {
+    const u = allUsers.find(x => x.id === userId);
+    if (!u) return;
+    extendingUserId = userId;
+
+    let currentExp = '♾️ ถาวร';
+    if (u.expiresAt) {
+      const exp = u.expiresAt.toDate ? u.expiresAt.toDate() : new Date(u.expiresAt);
+      currentExp = exp.toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'});
+    }
+
+    document.getElementById('extendInfo').innerHTML = `
+      <div style="padding:12px;background:#f4f7f5;border-radius:10px;font-size:13px">
+        <div><strong>${u.name}</strong> (${u.email})</div>
+        <div style="color:var(--gray);margin-top:4px">วันหมดอายุปัจจุบัน: ${currentExp}</div>
+      </div>`;
+
+    extendMode = 'preset';
+    selectedExtPreset = 'month';
+    document.querySelectorAll('#extendModal .expiry-tab')[0].classList.add('active');
+    document.querySelectorAll('#extendModal .expiry-tab')[1].classList.remove('active');
+    document.getElementById('extendPresetPanel').style.display = 'block';
+    document.getElementById('extendCustomPanel').style.display = 'none';
+    document.getElementById('extCustomValue').value = 15;
+    document.getElementById('extCustomUnit').value = 'custom_days';
+
+    pickExtPreset('month');
+    document.getElementById('extendModal').classList.add('show');
+  }
+
+  function closeExtendModal() { document.getElementById('extendModal').classList.remove('show'); }
+
+  async function confirmExtend() {
+    if (!extendingUserId) return;
+
+    let membershipType, expiresAt, customValue = null;
+    if (extendMode === 'preset') {
+      membershipType = selectedExtPreset;
+      expiresAt = calculateExpiryDate(membershipType);
+    } else {
+      customValue = parseInt(document.getElementById('extCustomValue').value);
+      const unit = document.getElementById('extCustomUnit').value;
+      if (isNaN(customValue) || customValue <= 0) {
+        alert('⚠️ กรุณาใส่ตัวเลขที่ถูกต้อง');
+        return;
+      }
+      membershipType = unit;
+      expiresAt = calculateExpiryDate(unit, customValue);
+    }
+
+    try {
+      await db.collection('users').doc(extendingUserId).update({
+        expiresAt, membershipType, customValue,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        updatedBy: currentUser.email
+      });
+      await logActivity('extend_user', { userId: extendingUserId, type: membershipType, customValue });
+      closeExtendModal();
+      await loadUsers();
+      alert('✅ ต่ออายุสำเร็จ!');
+    } catch (err) {
+      alert('❌ ' + err.message);
+    }
+  }
+
+  // ========== OTHER ACTIONS ==========
+  async function toggleActive(userId) {
+    const u = allUsers.find(x => x.id === userId);
+    if (!u) return;
+    const newStatus = !u.isActive;
+    if (!confirm(`ยืนยันการ${newStatus?'เปิดใช้งาน':'ระงับ'} user ${u.email}?`)) return;
+    try {
+      await db.collection('users').doc(userId).update({
+        isActive: newStatus,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        updatedBy: currentUser.email
+      });
+      await logActivity(newStatus?'activate_user':'deactivate_user', { userId, email: u.email });
+      await loadUsers();
+    } catch (err) { alert('❌ ' + err.message); }
+  }
+
+  async function resetPassword(email) {
+    if (!confirm(`ส่งลิงก์รีเซ็ตรหัสผ่านไปที่ ${email}?`)) return;
+    try {
+      await auth.sendPasswordResetEmail(email);
+      await logActivity('reset_password', { email });
+      alert('✅ ส่งลิงก์รีเซ็ตรหัสผ่านสำเร็จ! User จะได้รับอีเมลในไม่ช้า');
+    } catch (err) { alert('❌ ' + err.message); }
+  }
+
+  async function deleteUser(userId, email) {
+    if (userId === currentUser.uid) {
+      alert('❌ ไม่สามารถลบบัญชีของตัวเองได้');
+      return;
+    }
+    if (!confirm(`⚠️ ยืนยันการลบ ${email}?\n\n• ข้อมูลใน Firestore จะถูกลบ\n• Authentication ต้องลบเองที่ Firebase Console`)) return;
+    try {
+      await db.collection('users').doc(userId).delete();
+      await logActivity('delete_user', { userId, email });
+      await loadUsers();
+      alert(`✅ ลบข้อมูลใน Firestore สำเร็จ\n\n💡 อย่าลืมไปลบ Auth ที่ Firebase Console`);
+    } catch (err) { alert('❌ ' + err.message); }
+  }
+
+  async function handleLogout() {
+    if (confirm('ออกจากระบบ?')) await logout();
+  }
+
+  document.getElementById('modal').addEventListener('click', e => {
+    if (e.target.id === 'modal') closeModal();
+  });
+  document.getElementById('extendModal').addEventListener('click', e => {
+    if (e.target.id === 'extendModal') closeExtendModal();
+  });
+</script>
+</body>
+</html>

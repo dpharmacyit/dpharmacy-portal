@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Panel | Dpharmacy</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --green-deep:#0d4f3c;
+    --green-mid:#1a7a5e;
+    --green-soft:#e8f5ef;
+    --cream:#fdfcf7;
+    --ink:#0f1f1a;
+    --gray:#6b7d75;
+    --line:#e3ebe6;
+    --accent:#ff6b4a;
+    --gold:#d4a574;
+    --danger:#dc2626;
+    --warn:#f59e0b;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{
+    font-family:'IBM Plex Sans Thai','Outfit',sans-serif;
+    background:#f4f7f5;
+    color:var(--ink);
+    min-height:100vh;
+  }
+
+  /* ========== LAYOUT ========== */
+  .app{display:grid;grid-template-columns:260px 1fr;min-height:100vh}
+
+  /* ========== SIDEBAR ========== */
+  .sidebar{
+    background:var(--ink);color:white;
+    padding:24px 0;
+    position:sticky;top:0;height:100vh;
+    display:flex;flex-direction:column;
+  }
+  .sidebar-logo{
+    padding:0 24px 24px;
+    border-bottom:1px solid rgba(255,255,255,.1);
+    display:flex;align-items:center;gap:12px;
+  }
+  .sidebar-logo .icon{
+    width:40px;height:40px;
+    background:linear-gradient(135deg,var(--green-mid),var(--green-deep));
+    border-radius:10px;
+    display:flex;align-items:center;justify-content:center;
+    font-weight:800;font-size:20px;
+  }
+  .sidebar-logo h1{font-family:'Outfit',sans-serif;font-size:18px;font-weight:700}
+  .sidebar-logo p{font-size:11px;opacity:.5;letter-spacing:1.5px;text-transform:uppercase}
+
+  .nav-section{padding:24px 0;flex:1}
+  .nav-label{
+    padding:0 24px 8px;
+    font-size:11px;letter-spacing:1.5px;
+    text-transform:uppercase;opacity:.5;
+  }
+  .nav-item{
+    display:flex;align-items:center;gap:12px;
+    padding:12px 24px;color:white;
+    text-decoration:none;font-size:14px;
+    border-left:3px solid transparent;
+    transition:all .15s;cursor:pointer;
+  }
+  .nav-item:hover{background:rgba(255,255,255,.05)}
+  .nav-item.active{
+    background:rgba(26,122,94,.15);
+    border-left-color:var(--green-mid);
+    color:#a8e6cf;
+  }
+  .nav-item .ico{width:20px;text-align:center}
+  .nav-item .badge{
+    margin-left:auto;background:var(--accent);color:white;
+    font-size:10px;padding:2px 8px;border-radius:10px;
+  }
+
+  .sidebar-foot{
+    padding:16px 24px;border-top:1px solid rgba(255,255,255,.1);
+    display:flex;align-items:center;gap:12px;
+  }
+  .sidebar-foot .av{
+    width:36px;height:36px;border-radius:50%;
+    background:linear-gradient(135deg,var(--gold),var(--accent));
+    display:flex;align-items:center;justify-content:center;
+    font-weight:600;font-size:13px;
+  }
+  .sidebar-foot .name{font-size:13px;font-weight:500}
+  .sidebar-foot .role{font-size:11px;opacity:.6}
+
+  /* ========== MAIN ========== */
+  .main{padding:32px 40px}
+
+  .page-head{
+    display:flex;justify-content:space-between;align-items:flex-start;
+    margin-bottom:32px;
+  }
+  .page-head h2{
+    font-family:'Outfit',sans-serif;
+    font-size:32px;font-weight:700;letter-spacing:-.5px;
+  }
+  .breadcrumb{font-size:13px;color:var(--gray);margin-bottom:8px}
+  .breadcrumb a{color:var(--green-mid);text-decoration:none}
+
+  .actions{display:flex;gap:10px}
+  .btn{
+    padding:10px 20px;border-radius:10px;
+    border:none;cursor:pointer;font-family:inherit;
+    font-size:14px;font-weight:500;
+    display:inline-flex;align-items:center;gap:6px;
+    transition:all .15s;
+  }
+  .btn-primary{background:var(--green-deep);color:white}
+  .btn-primary:hover{background:var(--green-mid)}
+  .btn-ghost{background:white;border:1px solid var(--line);color:var(--ink)}
+  .btn-ghost:hover{border-color:var(--green-mid)}
+  .btn-danger{background:#fef2f2;color:var(--danger)}
+  .btn-danger:hover{background:var(--danger);color:white}
+
+  /* ========== STATS ========== */
+  .stats{
+    display:grid;grid-template-columns:repeat(4,1fr);gap:16px;
+    margin-bottom:32px;
+  }
+  .stat-card{
+    background:white;padding:20px;border-radius:16px;
+    border:1px solid var(--line);
+    display:flex;justify-content:space-between;align-items:center;
+  }
+  .stat-card .info .lbl{font-size:12px;color:var(--gray);letter-spacing:.5px}
+  .stat-card .info .val{font-family:'Outfit',sans-serif;font-size:32px;font-weight:700;margin-top:4px}
+  .stat-card .info .ch{font-size:12px;margin-top:4px}
+  .stat-card .info .ch.up{color:#16a34a}
+  .stat-card .info .ch.down{color:var(--danger)}
+  .stat-card .icn{
+    width:48px;height:48px;border-radius:12px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:22px;
+  }
+  .icn-1{background:var(--green-soft);color:var(--green-deep)}
+  .icn-2{background:#fff7ed;color:#ea580c}
+  .icn-3{background:#eff6ff;color:#2563eb}
+  .icn-4{background:#fdf4ff;color:#a21caf}
+
+  /* ========== TABS ========== */
+  .tabs{
+    display:flex;gap:4px;background:white;padding:4px;
+    border-radius:14px;border:1px solid var(--line);
+    width:fit-content;margin-bottom:20px;
+  }
+  .tab{
+    padding:10px 20px;font-size:14px;border:none;background:transparent;
+    border-radius:10px;cursor:pointer;font-family:inherit;
+    color:var(--gray);font-weight:500;
+  }
+  .tab.active{background:var(--ink);color:white}
+
+  /* ========== CARD / TABLE ========== */
+  .card{
+    background:white;border:1px solid var(--line);
+    border-radius:18px;overflow:hidden;
+  }
+  .card-head{
+    padding:18px 24px;border-bottom:1px solid var(--line);
+    display:flex;justify-content:space-between;align-items:center;
+  }
+  .card-head h3{font-size:16px;font-weight:600}
+  .card-tools{display:flex;gap:8px;align-items:center}
+  .card-search{
+    padding:8px 14px;border:1px solid var(--line);
+    border-radius:8px;font-family:inherit;outline:none;font-size:13px;width:240px;
+  }
+
+  table{width:100%;border-collapse:collapse}
+  thead{background:#f9fbfa}
+  th{
+    padding:12px 24px;text-align:left;font-size:12px;
+    font-weight:600;color:var(--gray);letter-spacing:.5px;
+    text-transform:uppercase;border-bottom:1px solid var(--line);
+  }
+  td{
+    padding:14px 24px;font-size:14px;
+    border-bottom:1px solid #f1f4f2;
+  }
+  tbody tr:hover{background:#f9fbfa}
+
+  .icon-cell{display:flex;align-items:center;gap:12px}
+  .icon-preview{
+    width:40px;height:40px;border-radius:10px;
+    display:flex;align-items:center;justify-content:center;
+    color:white;font-size:18px;
+  }
+
+  .url-cell{
+    font-family:'Outfit',monospace;font-size:12px;
+    background:#f4f7f5;padding:4px 10px;border-radius:6px;
+    color:var(--gray);max-width:300px;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+    display:inline-block;
+  }
+
+  .pill{
+    display:inline-flex;padding:4px 10px;border-radius:20px;
+    font-size:11px;font-weight:600;letter-spacing:.5px;
+    text-transform:uppercase;
+  }
+  .pill-green{background:var(--green-soft);color:var(--green-deep)}
+  .pill-orange{background:#fff7ed;color:#ea580c}
+  .pill-red{background:#fef2f2;color:var(--danger)}
+  .pill-blue{background:#eff6ff;color:#2563eb}
+
+  .row-actions{display:flex;gap:6px}
+  .ic-btn{
+    width:32px;height:32px;border-radius:8px;border:none;
+    background:transparent;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    color:var(--gray);transition:all .15s;
+  }
+  .ic-btn:hover{background:var(--green-soft);color:var(--green-deep)}
+  .ic-btn.del:hover{background:#fef2f2;color:var(--danger)}
+
+  /* ========== MODAL ========== */
+  .modal-bg{
+    position:fixed;inset:0;background:rgba(15,31,26,.5);
+    backdrop-filter:blur(4px);
+    display:none;align-items:center;justify-content:center;
+    z-index:200;padding:20px;
+  }
+  .modal-bg.show{display:flex}
+  .modal{
+    background:white;border-radius:20px;
+    width:100%;max-width:560px;
+    max-height:90vh;overflow-y:auto;
+  }
+  .modal-head{
+    padding:20px 24px;border-bottom:1px solid var(--line);
+    display:flex;justify-content:space-between;align-items:center;
+  }
+  .modal-head h3{font-size:18px;font-weight:600}
+  .modal-close{
+    width:32px;height:32px;border-radius:8px;border:none;
+    background:#f4f7f5;cursor:pointer;font-size:18px;
+  }
+  .modal-body{padding:24px}
+  .modal-foot{
+    padding:16px 24px;border-top:1px solid var(--line);
+    display:flex;justify-content:flex-end;gap:8px;
+  }
+
+  /* ========== FORM ========== */
+  .field{margin-bottom:16px}
+  .field label{
+    display:block;font-size:13px;font-weight:500;
+    margin-bottom:6px;color:var(--ink);
+  }
+  .field label .req{color:var(--danger)}
+  .field input, .field select, .field textarea{
+    width:100%;padding:11px 14px;border:1px solid var(--line);
+    border-radius:10px;font-family:inherit;font-size:14px;
+    outline:none;transition:border-color .15s;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus{
+    border-color:var(--green-mid);
+    box-shadow:0 0 0 3px rgba(26,122,94,.1);
+  }
+  .field-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+  .icon-picker{
+    display:grid;grid-template-columns:repeat(8,1fr);gap:6px;
+    padding:8px;background:#f4f7f5;border-radius:10px;
+  }
+  .icon-opt{
+    aspect-ratio:1;border:none;background:white;
+    border-radius:8px;cursor:pointer;font-size:18px;
+    transition:all .15s;
+  }
+  .icon-opt:hover{transform:scale(1.1)}
+  .icon-opt.selected{background:var(--green-deep);color:white}
+
+  .color-picker{display:flex;gap:6px;flex-wrap:wrap}
+  .color-opt{
+    width:32px;height:32px;border-radius:8px;
+    border:2px solid transparent;cursor:pointer;
+  }
+  .color-opt.selected{border-color:var(--ink);transform:scale(1.1)}
+
+  /* ========== EMPTY ========== */
+  .hint{
+    margin-top:14px;padding:12px 16px;
+    background:#fef9c3;border-left:3px solid #ca8a04;
+    border-radius:8px;font-size:13px;
+    color:#713f12;
+  }
+
+  @media(max-width:900px){
+    .app{grid-template-columns:1fr}
+    .sidebar{display:none}
+    .stats{grid-template-columns:repeat(2,1fr)}
+    .main{padding:20px}
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ========== SIDEBAR ========== -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="icon">D</div>
+      <div>
+        <h1>Dpharmacy</h1>
+        <p>Admin Panel</p>
+      </div>
+    </div>
+
+    <nav class="nav-section">
+      <div class="nav-label">หลัก</div>
+      <a class="nav-item" onclick="switchPage('dashboard')">
+        <span class="ico">📊</span> Dashboard
+      </a>
+      <a class="nav-item active" onclick="switchPage('systems')">
+        <span class="ico">💊</span> จัดการระบบ
+        <span class="badge">8</span>
+      </a>
+      <a class="nav-item" onclick="switchPage('branches')">
+        <span class="ico">🏪</span> จัดการสาขา
+        <span class="badge">12</span>
+      </a>
+
+      <div class="nav-label" style="margin-top:24px">ผู้ใช้</div>
+      <a class="nav-item">
+        <span class="ico">👥</span> ผู้ใช้งาน
+      </a>
+      <a class="nav-item">
+        <span class="ico">🔐</span> สิทธิ์การเข้าถึง
+      </a>
+
+      <div class="nav-label" style="margin-top:24px">ระบบ</div>
+      <a class="nav-item">
+        <span class="ico">📜</span> Audit Log
+      </a>
+      <a class="nav-item">
+        <span class="ico">⚙️</span> ตั้งค่าระบบ
+      </a>
+      <a class="nav-item" href="index.html">
+        <span class="ico">🏠</span> กลับหน้าแรก
+      </a>
+    </nav>
+
+    <div class="sidebar-foot">
+      <div class="av">SK</div>
+      <div>
+        <div class="name">คุณสมชาย</div>
+        <div class="role">Super Admin</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ========== MAIN ========== -->
+  <main class="main">
+
+    <div class="page-head">
+      <div>
+        <div class="breadcrumb"><a href="index.html">หน้าแรก</a> / Admin / จัดการระบบ</div>
+        <h2>จัดการระบบงาน 💊</h2>
+      </div>
+      <div class="actions">
+        <button class="btn btn-ghost">📥 Import</button>
+        <button class="btn btn-ghost">📤 Export</button>
+        <button class="btn btn-primary" onclick="openModal('add')">+ เพิ่มระบบใหม่</button>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats">
+      <div class="stat-card">
+        <div class="info">
+          <div class="lbl">ระบบทั้งหมด</div>
+          <div class="val">24</div>
+          <div class="ch up">↑ 2 ใหม่ (30 วัน)</div>
+        </div>
+        <div class="icn icn-1">💊</div>
+      </div>
+      <div class="stat-card">
+        <div class="info">
+          <div class="lbl">สาขาที่เปิดใช้งาน</div>
+          <div class="val">87</div>
+          <div class="ch up">↑ 100% Online</div>
+        </div>
+        <div class="icn icn-2">🏪</div>
+      </div>
+      <div class="stat-card">
+        <div class="info">
+          <div class="lbl">ผู้ใช้งาน</div>
+          <div class="val">342</div>
+          <div class="ch up">↑ 5.2%</div>
+        </div>
+        <div class="icn icn-3">👥</div>
+      </div>
+      <div class="stat-card">
+        <div class="info">
+          <div class="lbl">Click วันนี้</div>
+          <div class="val">1,248</div>
+          <div class="ch down">↓ 3.1%</div>
+        </div>
+        <div class="icn icn-4">📈</div>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab active">ระบบงาน</button>
+      <button class="tab">สาขา</button>
+      <button class="tab">หมวดหมู่</button>
+    </div>
+
+    <!-- Table -->
+    <div class="card">
+      <div class="card-head">
+        <h3>รายการระบบทั้งหมด</h3>
+        <div class="card-tools">
+          <input type="text" class="card-search" placeholder="🔍 ค้นหา...">
+          <select class="card-search" style="width:auto">
+            <option>ทั้งหมด</option>
+            <option>เปิดใช้</option>
+            <option>ปิด</option>
+          </select>
+        </div>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th style="width:40px"><input type="checkbox"></th>
+            <th>ระบบ</th>
+            <th>หมวด</th>
+            <th>URL</th>
+            <th>สถานะ</th>
+            <th>อัปเดตล่าสุด</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="tbody">
+          <!-- เติมจาก JS -->
+        </tbody>
+      </table>
+    </div>
+
+    <div class="hint">
+      💡 <strong>Tip:</strong> การเพิ่ม/แก้ไข/ลบ จะบันทึกลงฐานข้อมูล (Google Drive / JSON) อัตโนมัติ และมีการเก็บ Audit Log ของทุกการเปลี่ยนแปลง
+    </div>
+
+  </main>
+</div>
+
+<!-- ========== MODAL ========== -->
+<div class="modal-bg" id="modal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="modalTitle">+ เพิ่มระบบใหม่</h3>
+      <button class="modal-close" onclick="closeModal()">×</button>
+    </div>
+    <div class="modal-body">
+
+      <div class="field">
+        <label>ชื่อระบบ <span class="req">*</span></label>
+        <input type="text" id="f_name" placeholder="เช่น POS ระบบขาย">
+      </div>
+
+      <div class="field-grid">
+        <div class="field">
+          <label>หมวดหมู่</label>
+          <select id="f_cat">
+            <option>ระบบขาย</option>
+            <option>คลังสินค้า</option>
+            <option>บัญชี-การเงิน</option>
+            <option>HR</option>
+            <option>รายงาน</option>
+            <option>อื่นๆ</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>สถานะ</label>
+          <select id="f_status">
+            <option value="active">เปิดใช้งาน</option>
+            <option value="maintenance">กำลังปรับปรุง</option>
+            <option value="off">ปิด</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>URL ลิงก์ <span class="req">*</span></label>
+        <input type="url" id="f_url" placeholder="https://pos.dpharmacy.co.th">
+      </div>
+
+      <div class="field">
+        <label>คำอธิบาย</label>
+        <textarea id="f_desc" rows="2" placeholder="ระบบขายหน้าร้าน ออกใบเสร็จ..."></textarea>
+      </div>
+
+      <div class="field">
+        <label>เลือก Icon</label>
+        <div class="icon-picker" id="iconPicker"></div>
+      </div>
+
+      <div class="field">
+        <label>เลือกสีพื้น Icon</label>
+        <div class="color-picker" id="colorPicker"></div>
+      </div>
+
+      <div class="field">
+        <label>สิทธิ์การเข้าถึง</label>
+        <select id="f_perm">
+          <option>ทุกคน</option>
+          <option>เภสัชกรเท่านั้น</option>
+          <option>ผู้จัดการสาขา</option>
+          <option>HQ เท่านั้น</option>
+        </select>
+      </div>
+
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>
+      <button class="btn btn-primary" onclick="saveItem()">💾 บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ===== Mock Data =====
+  let items = [
+    {id:1,name:'POS ระบบขาย',cat:'ระบบขาย',url:'https://pos.dpharmacy.co.th',icon:'💊',color:'#0d4f3c',status:'active',updated:'15.08.68 10:23'},
+    {id:2,name:'Stock Management',cat:'คลังสินค้า',url:'https://stock.dpharmacy.co.th',icon:'📦',color:'#1a7a5e',status:'active',updated:'14.08.68 14:01'},
+    {id:3,name:'HR Portal',cat:'HR',url:'https://hr.dpharmacy.co.th',icon:'👥',color:'#d4a574',status:'active',updated:'12.08.68 09:11'},
+    {id:4,name:'Sales Report',cat:'รายงาน',url:'https://report.dpharmacy.co.th',icon:'📊',color:'#ff6b4a',status:'maintenance',updated:'10.08.68 16:44'},
+    {id:5,name:'Customer CRM',cat:'ลูกค้า',url:'https://crm.dpharmacy.co.th',icon:'❤️',color:'#dc2626',status:'active',updated:'08.08.68 11:30'},
+    {id:6,name:'Purchase Order',cat:'จัดซื้อ',url:'https://po.dpharmacy.co.th',icon:'🛒',color:'#7c3aed',status:'active',updated:'07.08.68 13:15'},
+    {id:7,name:'Accounting',cat:'บัญชี-การเงิน',url:'https://acc.dpharmacy.co.th',icon:'💰',color:'#0891b2',status:'active',updated:'05.08.68 10:00'},
+    {id:8,name:'E-Learning',cat:'อบรม',url:'https://learn.dpharmacy.co.th',icon:'🎓',color:'#16a34a',status:'off',updated:'01.08.68 08:20'},
+  ];
+
+  const ICONS = ['💊','📦','👥','📊','❤️','🛒','💰','🎓','📈','📋','🏥','💉','🩺','📱','💻','🔬','📚','🎯','⚡','🔔','📅','📞','🌡️','💼'];
+  const COLORS = ['#0d4f3c','#1a7a5e','#d4a574','#ff6b4a','#dc2626','#7c3aed','#0891b2','#16a34a','#2563eb','#a21caf','#ea580c','#f59e0b'];
+
+  let editingId = null;
+  let selectedIcon = '💊';
+  let selectedColor = '#0d4f3c';
+
+  // ===== Render Table =====
+  function render(){
+    const tbody = document.getElementById('tbody');
+    tbody.innerHTML = items.map(it => {
+      const statusPill =
+        it.status==='active' ? '<span class="pill pill-green">● เปิดใช้งาน</span>' :
+        it.status==='maintenance' ? '<span class="pill pill-orange">● ปรับปรุง</span>' :
+        '<span class="pill pill-red">● ปิด</span>';
+      return `
+        <tr>
+          <td><input type="checkbox"></td>
+          <td>
+            <div class="icon-cell">
+              <div class="icon-preview" style="background:${it.color}">${it.icon}</div>
+              <div>
+                <div style="font-weight:600">${it.name}</div>
+                <div style="font-size:12px;color:var(--gray)">ID: ${it.id}</div>
+              </div>
+            </div>
+          </td>
+          <td><span class="pill pill-blue">${it.cat}</span></td>
+          <td><span class="url-cell">${it.url}</span></td>
+          <td>${statusPill}</td>
+          <td style="color:var(--gray);font-size:13px">${it.updated}</td>
+          <td>
+            <div class="row-actions">
+              <button class="ic-btn" onclick="openModal('edit',${it.id})" title="แก้ไข">✏️</button>
+              <button class="ic-btn" title="คัดลอก URL" onclick="copyURL('${it.url}')">📋</button>
+              <button class="ic-btn del" onclick="delItem(${it.id})" title="ลบ">🗑️</button>
+            </div>
+          </td>
+        </tr>`;
+    }).join('');
+  }
+
+  // ===== Render Icon & Color Picker =====
+  function renderPickers(){
+    document.getElementById('iconPicker').innerHTML =
+      ICONS.map(i => `<button type="button" class="icon-opt ${i===selectedIcon?'selected':''}" onclick="pickIcon('${i}')">${i}</button>`).join('');
+    document.getElementById('colorPicker').innerHTML =
+      COLORS.map(c => `<button type="button" class="color-opt ${c===selectedColor?'selected':''}" style="background:${c}" onclick="pickColor('${c}')"></button>`).join('');
+  }
+  function pickIcon(i){selectedIcon=i;renderPickers()}
+  function pickColor(c){selectedColor=c;renderPickers()}
+
+  // ===== Modal =====
+  function openModal(mode,id){
+    document.getElementById('modal').classList.add('show');
+    if(mode==='add'){
+      editingId = null;
+      document.getElementById('modalTitle').textContent = '+ เพิ่มระบบใหม่';
+      document.getElementById('f_name').value='';
+      document.getElementById('f_url').value='';
+      document.getElementById('f_desc').value='';
+      selectedIcon='💊';selectedColor='#0d4f3c';
+    } else {
+      const it = items.find(x=>x.id===id);
+      editingId = id;
+      document.getElementById('modalTitle').textContent = '✏️ แก้ไข: '+it.name;
+      document.getElementById('f_name').value=it.name;
+      document.getElementById('f_cat').value=it.cat;
+      document.getElementById('f_url').value=it.url;
+      document.getElementById('f_status').value=it.status;
+      selectedIcon=it.icon;selectedColor=it.color;
+    }
+    renderPickers();
+  }
+  function closeModal(){
+    document.getElementById('modal').classList.remove('show');
+  }
+
+  function saveItem(){
+    const data = {
+      name: document.getElementById('f_name').value,
+      cat: document.getElementById('f_cat').value,
+      url: document.getElementById('f_url').value,
+      status: document.getElementById('f_status').value,
+      icon: selectedIcon,
+      color: selectedColor,
+      updated: new Date().toLocaleString('th-TH')
+    };
+    if(!data.name || !data.url){
+      alert('กรุณากรอก ชื่อระบบ และ URL');
+      return;
+    }
+    if(editingId){
+      items = items.map(x => x.id===editingId ? {...x,...data} : x);
+    } else {
+      data.id = Math.max(...items.map(x=>x.id))+1;
+      items.push(data);
+    }
+    closeModal();
+    render();
+  }
+
+  function delItem(id){
+    if(confirm('ยืนยันการลบรายการนี้?')){
+      items = items.filter(x=>x.id!==id);
+      render();
+    }
+  }
+
+  function copyURL(url){
+    navigator.clipboard.writeText(url);
+    alert('คัดลอก URL แล้ว: '+url);
+  }
+
+  function switchPage(p){
+    document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+    event.currentTarget.classList.add('active');
+  }
+
+  document.querySelectorAll('.tab').forEach(t=>{
+    t.addEventListener('click',()=>{
+      document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+      t.classList.add('active');
+    });
+  });
+
+  // Close modal on background click
+  document.getElementById('modal').addEventListener('click',e=>{
+    if(e.target.id==='modal') closeModal();
+  });
+
+  render();
+</script>
+</body>
+</html>

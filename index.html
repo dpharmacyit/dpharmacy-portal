@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dpharmacy | ศูนย์รวมระบบงาน</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;800&display=swap" rel="stylesheet">
+
+<!-- 🔥 Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+
+<style>
+  :root{
+    --green-deep:#0d4f3c;--green-mid:#1a7a5e;--green-soft:#e8f5ef;
+    --mint:#a8e6cf;--cream:#fdfcf7;--ink:#0f1f1a;--gray:#6b7d75;
+    --line:#e3ebe6;--accent:#ff6b4a;--gold:#d4a574;--danger:#dc2626;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'IBM Plex Sans Thai','Outfit',sans-serif;background:var(--cream);color:var(--ink);min-height:100vh}
+
+  .topbar{background:var(--green-deep);color:white;padding:8px 0;font-size:13px}
+  .topbar-inner{max-width:1400px;margin:0 auto;padding:0 32px;display:flex;justify-content:space-between;align-items:center}
+  .topbar-left{display:flex;gap:24px;opacity:.85}
+  .topbar-right{display:flex;gap:16px;align-items:center}
+  .clock{font-family:'Outfit',monospace;letter-spacing:1px}
+
+  header{background:white;border-bottom:1px solid var(--line);padding:20px 0;position:sticky;top:0;z-index:100;backdrop-filter:blur(10px);background:rgba(253,252,247,.95)}
+  .header-inner{max-width:1400px;margin:0 auto;padding:0 32px;display:flex;justify-content:space-between;align-items:center}
+  .logo{display:flex;align-items:center;gap:14px}
+  .logo-icon{width:52px;height:52px;background:linear-gradient(135deg,var(--green-deep),var(--green-mid));border-radius:14px;display:flex;align-items:center;justify-content:center;color:white;font-size:28px;font-weight:800;box-shadow:0 6px 20px rgba(13,79,60,.25);position:relative}
+  .logo-icon::after{content:'';position:absolute;inset:3px;border:1.5px solid rgba(255,255,255,.3);border-radius:11px}
+  .logo-text h1{font-family:'Outfit',sans-serif;font-size:24px;font-weight:800;letter-spacing:-.5px;color:var(--green-deep)}
+  .logo-text p{font-size:12px;color:var(--gray);letter-spacing:2px;text-transform:uppercase}
+
+  .header-actions{display:flex;gap:12px;align-items:center}
+  .user-chip{display:flex;align-items:center;gap:10px;padding:8px 16px;background:var(--green-soft);border-radius:30px;font-size:14px;position:relative;cursor:pointer}
+  .user-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--accent));display:flex;align-items:center;justify-content:center;color:white;font-weight:600;font-size:13px}
+
+  /* Expiry badge */
+  .expiry-badge{font-size:11px;padding:2px 8px;border-radius:20px;font-weight:600}
+  .expiry-ok{background:#dcfce7;color:#166534}
+  .expiry-warn{background:#fef9c3;color:#713f12}
+  .expiry-danger{background:#fef2f2;color:var(--danger)}
+
+  /* Dropdown menu */
+  .user-dropdown{position:absolute;top:calc(100% + 8px);right:0;background:white;border:1px solid var(--line);border-radius:14px;padding:8px;min-width:200px;box-shadow:0 8px 24px rgba(0,0,0,.1);display:none;z-index:200}
+  .user-chip:hover .user-dropdown{display:block}
+  .dropdown-item{padding:10px 14px;border-radius:8px;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:8px;color:var(--ink);text-decoration:none}
+  .dropdown-item:hover{background:var(--green-soft)}
+  .dropdown-divider{height:1px;background:var(--line);margin:4px 0}
+  .dropdown-item.danger{color:var(--danger)}
+  .dropdown-item.danger:hover{background:#fef2f2}
+
+  .admin-btn{padding:10px 20px;background:var(--ink);color:white;border:none;border-radius:10px;cursor:pointer;font-family:inherit;font-size:14px;font-weight:500;display:flex;align-items:center;gap:6px;transition:all .2s}
+  .admin-btn:hover{background:var(--green-deep);transform:translateY(-1px)}
+  .admin-btn.hidden{display:none}
+
+  .hero{max-width:1400px;margin:0 auto;padding:48px 32px 24px;display:grid;grid-template-columns:1.2fr .8fr;gap:48px;align-items:center}
+  .hero-text h2{font-family:'Outfit',sans-serif;font-size:54px;line-height:1.05;font-weight:800;letter-spacing:-2px;color:var(--ink)}
+  .hero-text h2 .accent{color:var(--green-mid);font-style:italic;font-weight:300}
+  .hero-text p{margin-top:20px;font-size:17px;color:var(--gray);line-height:1.7;max-width:520px}
+  .hero-stats{display:flex;gap:32px;margin-top:32px;padding-top:32px;border-top:1px solid var(--line)}
+  .stat .num{font-family:'Outfit',sans-serif;font-size:36px;font-weight:800;color:var(--green-deep);line-height:1}
+  .stat .label{font-size:13px;color:var(--gray);margin-top:4px;letter-spacing:.5px}
+
+  .hero-visual{aspect-ratio:1;background:linear-gradient(135deg,var(--green-soft) 0%,var(--mint) 100%);border-radius:32px;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center}
+  .pill{position:absolute;background:white;padding:14px 24px;border-radius:100px;font-size:14px;font-weight:500;box-shadow:0 8px 24px rgba(13,79,60,.12);display:flex;align-items:center;gap:8px}
+  .pill-1{top:18%;left:8%;animation:float 3s ease-in-out infinite}
+  .pill-2{top:38%;right:6%;animation:float 3.5s ease-in-out infinite .5s}
+  .pill-3{bottom:22%;left:15%;animation:float 4s ease-in-out infinite 1s}
+  .pill-4{bottom:8%;right:18%;animation:float 3.2s ease-in-out infinite 1.5s}
+  @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+  .cross{width:200px;height:200px;background:var(--green-deep);border-radius:24px;display:flex;align-items:center;justify-content:center;box-shadow:0 30px 60px rgba(13,79,60,.3);transform:rotate(-8deg)}
+  .cross::before,.cross::after{content:'';position:absolute;background:white;border-radius:8px}
+  .cross::before{width:80px;height:20px}
+  .cross::after{width:20px;height:80px}
+
+  .search-section{max-width:1400px;margin:24px auto 0;padding:0 32px}
+  .search-wrap{background:white;border:2px solid var(--line);border-radius:18px;padding:6px;display:flex;align-items:center;transition:all .2s}
+  .search-wrap:focus-within{border-color:var(--green-mid);box-shadow:0 0 0 4px rgba(26,122,94,.1)}
+  .search-wrap input{flex:1;border:none;outline:none;padding:14px 20px;font-size:16px;font-family:inherit;background:transparent}
+  .search-wrap button{padding:12px 28px;background:var(--green-deep);color:white;border:none;border-radius:12px;cursor:pointer;font-family:inherit;font-weight:500}
+  .filter-chips{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
+  .chip{padding:8px 16px;background:white;border:1px solid var(--line);border-radius:20px;font-size:13px;cursor:pointer;transition:all .15s;font-family:inherit}
+  .chip:hover{border-color:var(--green-mid);color:var(--green-mid)}
+  .chip.active{background:var(--green-deep);color:white;border-color:var(--green-deep)}
+
+  .section{max-width:1400px;margin:48px auto 0;padding:0 32px}
+  .section-head{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:24px}
+  .section-title{font-family:'Outfit',sans-serif;font-size:28px;font-weight:700;letter-spacing:-.5px}
+  .section-title span{color:var(--green-mid)}
+  .section-sub{font-size:14px;color:var(--gray);margin-top:4px}
+  .view-all{color:var(--green-mid);text-decoration:none;font-size:14px;font-weight:500;display:flex;align-items:center;gap:4px}
+
+  .systems-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+  .sys-card{background:white;border:1px solid var(--line);border-radius:20px;padding:24px;cursor:pointer;transition:all .2s;text-decoration:none;color:inherit;display:flex;flex-direction:column;gap:14px;position:relative;overflow:hidden}
+  .sys-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--green-deep),var(--mint));transform:translateX(-100%);transition:transform .3s}
+  .sys-card:hover{transform:translateY(-4px);border-color:var(--green-mid);box-shadow:0 16px 40px rgba(13,79,60,.1)}
+  .sys-card:hover::before{transform:translateX(0)}
+  .sys-icon{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;color:white}
+  .sys-name{font-size:16px;font-weight:600}
+  .sys-desc{font-size:13px;color:var(--gray);line-height:1.5;flex:1}
+  .sys-tag{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--green-mid);font-weight:600}
+
+  .branches-section{background:linear-gradient(180deg,transparent 0,var(--green-soft) 100%);margin-top:64px;padding:48px 0 80px}
+  .branch-toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;gap:16px;flex-wrap:wrap}
+  .branch-tabs{display:flex;gap:4px;background:white;padding:4px;border-radius:14px;border:1px solid var(--line)}
+  .branch-tab{padding:8px 16px;font-size:13px;border:none;background:transparent;border-radius:10px;cursor:pointer;font-family:inherit;color:var(--gray)}
+  .branch-tab.active{background:var(--green-deep);color:white}
+  .branches-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+  .branch-card{background:white;border:1px solid var(--line);border-radius:16px;padding:18px;cursor:pointer;transition:all .2s;display:flex;flex-direction:column;gap:10px;text-decoration:none;color:inherit;position:relative}
+  .branch-card:hover{border-color:var(--green-mid);transform:translateX(4px);box-shadow:0 8px 20px rgba(13,79,60,.08)}
+  .branch-head{display:flex;justify-content:space-between;align-items:center}
+  .branch-code{font-family:'Outfit',monospace;font-size:12px;font-weight:600;background:var(--green-soft);color:var(--green-deep);padding:4px 10px;border-radius:8px;letter-spacing:1px}
+  .branch-status{width:8px;height:8px;border-radius:50%;background:#22c55e;box-shadow:0 0 0 3px rgba(34,197,94,.2)}
+  .branch-name{font-size:15px;font-weight:600;line-height:1.3}
+  .branch-meta{font-size:12px;color:var(--gray);display:flex;align-items:center;gap:6px}
+  .branch-arrow{margin-top:6px;color:var(--green-mid);font-size:13px;display:flex;align-items:center;gap:4px;font-weight:500}
+
+  footer{background:var(--ink);color:white;padding:48px 0 24px}
+  .footer-inner{max-width:1400px;margin:0 auto;padding:0 32px}
+  .footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:48px;margin-bottom:32px}
+  .footer-brand h3{font-family:'Outfit',sans-serif;font-size:24px;margin-bottom:12px}
+  .footer-brand p{font-size:14px;opacity:.7;line-height:1.7}
+  .footer-col h4{font-size:13px;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:16px;opacity:.6}
+  .footer-col a{display:block;font-size:14px;color:white;text-decoration:none;opacity:.8;margin-bottom:10px;transition:opacity .15s}
+  .footer-col a:hover{opacity:1}
+  .footer-bottom{padding-top:24px;border-top:1px solid rgba(255,255,255,.1);display:flex;justify-content:space-between;font-size:13px;opacity:.5}
+
+  /* Loading overlay */
+  .loading-overlay{position:fixed;inset:0;background:var(--cream);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;z-index:999}
+  .loading-overlay .spinner{width:40px;height:40px;border:3px solid var(--line);border-top-color:var(--green-mid);border-radius:50%;animation:spin 1s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .loading-overlay p{color:var(--gray);font-size:14px}
+
+  @media(max-width:900px){
+    .hero{grid-template-columns:1fr;padding:32px 20px}
+    .hero-text h2{font-size:38px}
+    .systems-grid{grid-template-columns:repeat(2,1fr)}
+    .footer-grid{grid-template-columns:1fr 1fr;gap:24px}
+    .topbar-left{display:none}
+  }
+</style>
+</head>
+<body>
+
+<!-- Loading -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spinner"></div>
+  <p>กำลังโหลด...</p>
+</div>
+
+<!-- Top Bar -->
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="topbar-left">
+      <span>📞 Hotline: 02-XXX-XXXX</span>
+      <span>📧 support@dpharmacy.co.th</span>
+    </div>
+    <div class="topbar-right">
+      <span class="clock" id="clock">--:--:--</span>
+      <span>|</span>
+      <span id="dateTH">วันนี้</span>
+    </div>
+  </div>
+</div>
+
+<!-- Header -->
+<header>
+  <div class="header-inner">
+    <div class="logo">
+      <div class="logo-icon">D</div>
+      <div class="logo-text">
+        <h1>Dpharmacy</h1>
+        <p>Internal Portal</p>
+      </div>
+    </div>
+    <div class="header-actions">
+
+      <!-- User Chip + Dropdown -->
+      <div class="user-chip">
+        <div class="user-avatar" id="userAvatar">--</div>
+        <div>
+          <div id="userName" style="font-weight:600;font-size:14px">กำลังโหลด...</div>
+          <div id="userExpiry" style="font-size:11px;margin-top:2px"></div>
+        </div>
+        <div class="user-dropdown">
+          <div style="padding:10px 14px;font-size:12px;color:var(--gray)" id="dropdownRole">--</div>
+          <div class="dropdown-divider"></div>
+          <a href="users.html" class="dropdown-item" id="manageUserBtn">👥 จัดการผู้ใช้</a>
+          <a href="admin.html" class="dropdown-item" id="manageSystemBtn">⚙️ จัดการระบบ</a>
+          <div class="dropdown-divider"></div>
+          <div class="dropdown-item danger" onclick="handleLogout()">⏻ ออกจากระบบ</div>
+        </div>
+      </div>
+
+      <!-- Admin Button (เฉพาะ admin/manager) -->
+      <button class="admin-btn hidden" id="adminBtn" onclick="window.location.href='users.html'">
+        👥 จัดการ User
+      </button>
+
+    </div>
+  </div>
+</header>
+
+<!-- Hero -->
+<section class="hero">
+  <div class="hero-text">
+    <h2>ศูนย์รวมระบบงาน<br><span class="accent">ทุกอย่าง</span> ในที่เดียว</h2>
+    <p>เข้าถึงระบบงานทุกแผนก เชื่อมต่อทุกสาขา ดูข้อมูลแบบ Real-time จัดการทุกอย่างได้จากหน้าเดียว</p>
+    <div class="hero-stats">
+      <div class="stat"><div class="num" id="statBranch">--</div><div class="label">สาขา</div></div>
+      <div class="stat"><div class="num" id="statSystem">--</div><div class="label">ระบบงาน</div></div>
+      <div class="stat"><div class="num">99.9%</div><div class="label">Uptime</div></div>
+    </div>
+  </div>
+  <div class="hero-visual">
+    <div class="pill pill-1">💊 ระบบขาย</div>
+    <div class="pill pill-2">📊 รายงาน</div>
+    <div class="pill pill-3">📦 สต็อก</div>
+    <div class="pill pill-4">👥 HR</div>
+    <div class="cross"></div>
+  </div>
+</section>
+
+<!-- Search -->
+<section class="search-section">
+  <div class="search-wrap">
+    <input type="text" id="searchInput" placeholder="🔍 ค้นหาระบบ หรือ สาขา..." oninput="filterAll()">
+    <button onclick="filterAll()">ค้นหา</button>
+  </div>
+  <div class="filter-chips">
+    <div class="chip active" onclick="filterChip(this,'')">ทั้งหมด</div>
+    <div class="chip" onclick="filterChip(this,'ขาย')">ระบบขาย</div>
+    <div class="chip" onclick="filterChip(this,'คลัง')">คลังสินค้า</div>
+    <div class="chip" onclick="filterChip(this,'บัญชี')">บัญชี-การเงิน</div>
+    <div class="chip" onclick="filterChip(this,'บุคคล')">HR</div>
+    <div class="chip" onclick="filterChip(this,'รายงาน')">รายงาน</div>
+  </div>
+</section>
+
+<!-- Systems -->
+<section class="section">
+  <div class="section-head">
+    <div>
+      <div class="section-title">ระบบงาน <span>หลัก</span></div>
+      <div class="section-sub">ระบบที่ใช้บ่อย เข้าถึงด่วน</div>
+    </div>
+  </div>
+  <div class="systems-grid" id="systemsGrid"></div>
+</section>
+
+<!-- Branches -->
+<section class="branches-section">
+  <div class="section">
+    <div class="section-head">
+      <div>
+        <div class="section-title">รายการ <span>สาขา</span></div>
+        <div class="section-sub">คลิกที่สาขาเพื่อเข้าระบบของแต่ละสาขา</div>
+      </div>
+    </div>
+    <div class="branch-toolbar">
+      <div class="branch-tabs" id="areaTabs">
+        <button class="branch-tab active" onclick="filterArea(this,'')">ทั้งหมด</button>
+      </div>
+      <input type="text" id="branchSearch" placeholder="🔍 ค้นหาสาขา..." oninput="renderBranches()" style="padding:10px 16px;border:1px solid var(--line);border-radius:10px;font-family:inherit;outline:none">
+    </div>
+    <div class="branches-grid" id="branchesGrid"></div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <h3>Dpharmacy 💊</h3>
+        <p>เครือข่ายร้านขายยาคุณภาพ ศูนย์รวมระบบงานภายใน เชื่อมต่อทุกสาขาทั่วประเทศ</p>
+      </div>
+      <div class="footer-col">
+        <h4>ระบบ</h4>
+        <a href="#">POS</a><a href="#">Stock</a><a href="#">HR</a><a href="#">Reports</a>
+      </div>
+      <div class="footer-col">
+        <h4>ช่วยเหลือ</h4>
+        <a href="#">คู่มือ</a><a href="#">FAQ</a><a href="#">ติดต่อ IT</a>
+      </div>
+      <div class="footer-col">
+        <h4>ผู้ดูแล</h4>
+        <a href="users.html">จัดการ User</a>
+        <a href="admin.html">จัดการระบบ</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2025 Dpharmacy Co., Ltd.</span>
+      <span id="footerUser">--</span>
+    </div>
+  </div>
+</footer>
+
+<!-- Firebase Config -->
+<script src="firebase-config.js"></script>
+
+<script>
+  // ===== STATE =====
+  let allSystems = [];
+  let allBranches = [];
+  let currentArea = '';
+  let currentTag = '';
+  let currentUserData = null;
+
+  // ===== DATA ตัวอย่าง (จะดึงจาก Firestore ในอนาคต) =====
+  const defaultSystems = [
+    {name:'POS ระบบขาย',desc:'ระบบขายหน้าร้าน ออกใบเสร็จ คิดเงิน',icon:'💊',color:'#0d4f3c',tag:'ขาย',url:'#'},
+    {name:'Stock Management',desc:'จัดการคลังยา ตรวจสต็อก เช็ควันหมดอายุ',icon:'📦',color:'#1a7a5e',tag:'คลัง',url:'#'},
+    {name:'HR Portal',desc:'ระบบลา ตารางเวร เงินเดือนพนักงาน',icon:'👥',color:'#d4a574',tag:'บุคคล',url:'#'},
+    {name:'Sales Report',desc:'รายงานยอดขาย วิเคราะห์ Dashboard',icon:'📊',color:'#ff6b4a',tag:'รายงาน',url:'#'},
+    {name:'Customer CRM',desc:'ระบบสมาชิก ลูกค้าประจำ สะสมแต้ม',icon:'❤️',color:'#dc2626',tag:'ลูกค้า',url:'#'},
+    {name:'Purchase Order',desc:'ระบบสั่งซื้อ จัดการ Supplier',icon:'🛒',color:'#7c3aed',tag:'จัดซื้อ',url:'#'},
+    {name:'Accounting',desc:'ระบบบัญชี ภาษี งบการเงิน',icon:'💰',color:'#0891b2',tag:'บัญชี',url:'#'},
+    {name:'E-Learning',desc:'อบรมออนไลน์ คอร์สเภสัชกร',icon:'🎓',color:'#16a34a',tag:'อบรม',url:'#'},
+  ];
+
+  const defaultBranches = [
+    {code:'BKK001',name:'สาขาสีลม',area:'กรุงเทพฯ',url:'#'},
+    {code:'BKK002',name:'สาขาสยาม สแควร์',area:'กรุงเทพฯ',url:'#'},
+    {code:'BKK003',name:'สาขาบางนา (เซ็นทรัล)',area:'กรุงเทพฯ',url:'#'},
+    {code:'BKK004',name:'สาขาลาดพร้าว',area:'กรุงเทพฯ',url:'#'},
+    {code:'NTB001',name:'สาขานนทบุรี',area:'ภาคกลาง',url:'#'},
+    {code:'AYA001',name:'สาขาอยุธยา',area:'ภาคกลาง',url:'#'},
+    {code:'CNX001',name:'สาขาเชียงใหม่ (นิมมาน)',area:'ภาคเหนือ',url:'#'},
+    {code:'PHK001',name:'สาขาภูเก็ต',area:'ภาคใต้',url:'#'},
+    {code:'HDY001',name:'สาขาหาดใหญ่',area:'ภาคใต้',url:'#'},
+    {code:'KOR001',name:'สาขาโคราช',area:'ภาคอีสาน',url:'#'},
+  ];
+
+  // ===== AUTH - บังคับ Login ก่อน =====
+  requireAuth(async (userData) => {
+    currentUserData = userData;
+
+    // แสดงชื่อ + Avatar
+    const name = userData.name || userData.email;
+    const initials = name.substring(0,2).toUpperCase();
+    document.getElementById('userAvatar').textContent = initials;
+    document.getElementById('userName').textContent = name;
+    document.getElementById('dropdownRole').textContent = ROLE_LABELS[userData.role] || userData.role;
+    document.getElementById('footerUser').textContent = `Login: ${userData.email}`;
+
+    // แสดงวันหมดอายุ
+    const expiry = checkExpiry(userData.expiresAt);
+    const expiryEl = document.getElementById('userExpiry');
+    if (!userData.expiresAt) {
+      expiryEl.innerHTML = '<span class="expiry-badge expiry-ok">♾️ ถาวร</span>';
+    } else if (!expiry.valid) {
+      expiryEl.innerHTML = '<span class="expiry-badge expiry-danger">⛔ หมดอายุ</span>';
+    } else if (expiry.daysLeft <= 7) {
+      expiryEl.innerHTML = `<span class="expiry-badge expiry-warn">⏰ เหลือ ${expiry.daysLeft} วัน</span>`;
+    } else {
+      expiryEl.innerHTML = `<span class="expiry-badge expiry-ok">✓ ${expiry.daysLeft} วัน</span>`;
+    }
+
+    // แสดงปุ่ม Admin เฉพาะ super_admin / manager
+    if (isAdminRole(userData.role)) {
+      document.getElementById('adminBtn').classList.remove('hidden');
+    } else {
+      // ซ่อนเมนู admin ใน dropdown
+      document.getElementById('manageUserBtn').style.display = 'none';
+      document.getElementById('manageSystemBtn').style.display = 'none';
+    }
+
+    // โหลดข้อมูล
+    await loadData();
+
+    // ซ่อน loading
+    document.getElementById('loadingOverlay').style.display = 'none';
+
+    // Log การเข้าใช้
+    await logActivity('view_home');
+  });
+
+  // ===== LOAD DATA =====
+  async function loadData() {
+    allSystems = defaultSystems;
+    allBranches = defaultBranches;
+
+    // อัปเดต stats
+    document.getElementById('statBranch').textContent = allBranches.length;
+    document.getElementById('statSystem').textContent = allSystems.length;
+
+    // สร้าง Area Tabs
+    const areas = [...new Set(allBranches.map(b => b.area))];
+    const tabsEl = document.getElementById('areaTabs');
+    areas.forEach(area => {
+      const btn = document.createElement('button');
+      btn.className = 'branch-tab';
+      btn.textContent = area;
+      btn.onclick = function(){ filterArea(this, area); };
+      tabsEl.appendChild(btn);
+    });
+
+    renderSystems();
+    renderBranches();
+  }
+
+  // ===== RENDER SYSTEMS =====
+  function renderSystems() {
+    const search = document.getElementById('searchInput').value.toLowerCase();
+    const grid = document.getElementById('systemsGrid');
+
+    const filtered = allSystems.filter(s => {
+      if (currentTag && s.tag !== currentTag) return false;
+      if (search && !s.name.toLowerCase().includes(search) && !s.desc.toLowerCase().includes(search)) return false;
+      return true;
+    });
+
+    if (filtered.length === 0) {
+      grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--gray)">ไม่พบระบบที่ค้นหา</div>';
+      return;
+    }
+
+    grid.innerHTML = filtered.map(s => `
+      <a href="${s.url}" class="sys-card">
+        <div class="sys-icon" style="background:${s.color}">${s.icon}</div>
+        <div class="sys-tag">${s.tag}</div>
+        <div class="sys-name">${s.name}</div>
+        <div class="sys-desc">${s.desc}</div>
+      </a>`).join('');
+  }
+
+  // ===== RENDER BRANCHES =====
+  function renderBranches() {
+    const search = document.getElementById('branchSearch').value.toLowerCase();
+    const grid = document.getElementById('branchesGrid');
+
+    const filtered = allBranches.filter(b => {
+      if (currentArea && b.area !== currentArea) return false;
+      if (search && !b.name.toLowerCase().includes(search) && !b.code.toLowerCase().includes(search)) return false;
+      return true;
+    });
+
+    if (filtered.length === 0) {
+      grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--gray)">ไม่พบสาขาที่ค้นหา</div>';
+      return;
+    }
+
+    grid.innerHTML = filtered.map(b => `
+      <a href="${b.url}" class="branch-card">
+        <div class="branch-head">
+          <div class="branch-code">${b.code}</div>
+          <div class="branch-status" title="ออนไลน์"></div>
+        </div>
+        <div class="branch-name">${b.name}</div>
+        <div class="branch-meta">📍 ${b.area}</div>
+        <div class="branch-arrow">เข้าระบบสาขา →</div>
+      </a>`).join('');
+  }
+
+  // ===== FILTERS =====
+  function filterAll() {
+    renderSystems();
+    renderBranches();
+  }
+
+  function filterChip(el, tag) {
+    currentTag = tag;
+    document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+    el.classList.add('active');
+    renderSystems();
+  }
+
+  function filterArea(el, area) {
+    currentArea = area;
+    document.querySelectorAll('.branch-tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    renderBranches();
+  }
+
+  // ===== LOGOUT =====
+  async function handleLogout() {
+    if (confirm('ออกจากระบบ?')) await logout();
+  }
+
+  // ===== CLOCK =====
+  function updateClock() {
+    const now = new Date();
+    const hh = String(now.getHours()).padStart(2,'0');
+    const mm = String(now.getMinutes()).padStart(2,'0');
+    const ss = String(now.getSeconds()).padStart(2,'0');
+    document.getElementById('clock').textContent = `${hh}:${mm}:${ss}`;
+    const days = ['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์'];
+    const months = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+    document.getElementById('dateTH').textContent =
+      `${days[now.getDay()]} ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()+543}`;
+  }
+  updateClock();
+  setInterval(updateClock, 1000);
+</script>
+</body>
+</html>
