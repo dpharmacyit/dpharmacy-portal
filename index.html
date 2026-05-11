@@ -366,17 +366,30 @@
 
   // ===== LOAD DATA =====
   async function loadData() {
-    // ดึงจาก Firestore จริง ถ้าไม่มีใช้ default
     try {
+      // ดึง systems ทั้งหมด แล้ว filter ใน JS แทน
       const [sysSnap, branchSnap] = await Promise.all([
-        db.collection('systems').where('status','==','active').orderBy('createdAt','asc').get(),
-        db.collection('branches').where('status','==','active').orderBy('code','asc').get()
+        db.collection('systems').get(),
+        db.collection('branches').get()
       ]);
-      allSystems = sysSnap.empty ? defaultSystems : sysSnap.docs.map(d => ({id:d.id,...d.data()}));
-      allBranches = branchSnap.empty ? defaultBranches : branchSnap.docs.map(d => ({id:d.id,...d.data()}));
+
+      console.log('Systems found:', sysSnap.size);
+      console.log('Branches found:', branchSnap.size);
+
+      const systems = sysSnap.docs.map(d => ({id:d.id,...d.data()}));
+      const branches = branchSnap.docs.map(d => ({id:d.id,...d.data()}));
+
+      // filter เฉพาะที่ active
+      allSystems = systems.filter(s => s.status === 'active' || !s.status);
+      allBranches = branches.filter(b => b.status === 'active' || !b.status);
+
+      console.log('Active systems:', allSystems.length);
+      console.log('Active branches:', allBranches.length);
+
     } catch(e) {
-      allSystems = defaultSystems;
-      allBranches = defaultBranches;
+      console.error('loadData error:', e);
+      allSystems = [];
+      allBranches = [];
     }
 
     // อัปเดต stats
